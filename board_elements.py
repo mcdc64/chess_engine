@@ -48,6 +48,24 @@ class Board():
         self.pieces[new_x][new_y] = moving_piece
         if (en_passant and new_y>0):
             self.pieces[new_x][new_y-1] = Piece(Color.NONE,PieceType.EMPTY)
+    def move_string(self,old_position,new_position,en_passant = False):
+        move_str = ""
+        old_piece = self.pieces[old_position[0]][old_position[1]]
+        nums = [0,1,2,3,4,5,6]
+        strs = ["","","N","B","R","Q","K"]
+        move_str+= strs[old_piece.piece_type.value]
+        letters = "abcdefgh"
+
+        new_piece = self.pieces[new_position[0]][new_position[1]]
+        if(new_piece.piece_type!=PieceType.EMPTY or en_passant):
+            if (old_piece.piece_type == PieceType.PAWN):
+                move_str += letters[old_position[0]]
+            move_str+="x"
+        letters = "abcdefgh"
+        move_str+=(letters[new_position[0]])
+
+        move_str+=(str(new_position[1]+1))
+        return move_str
 
 
 

@@ -2,6 +2,9 @@ import random
 
 import numpy as np
 import pygame
+import pygame_widgets
+from pygame_widgets.button import Button
+from pygame_widgets.textbox import TextBox
 import board_elements
 
 import time
@@ -9,20 +12,7 @@ import copy
 from pygame.locals import K_p
 from enum import Enum
 
-class Button(pygame.sprite.Sprite):
-    def __init__(self,name,x1,y1,width,height,image_path,click_fcn):
-        self.name = name
-        self.x1 = x1
-        self.y1 = y1
-        self.width = width
-        self.height = height
-        self.rect = pygame.Rect(x1,y1,width,height)
-        self.image_path = image_path
-        self.image = pygame.transform.scale(pygame.image.load(image_path),(width,height))
-        self.click_fcn = click_fcn
 
-    def draw(self,screen):
-        screen.blit(self.image,self.rect)
 
 
 
@@ -99,9 +89,12 @@ def handle_board_click(board,first_sq, second_sq, mouse_down_sq, mouse_up_sq):
         mouse_up_sq = [-1, -1]
     return first_sq,second_sq,mouse_down_sq,mouse_up_sq,
 
-screen_width = 1280
-screen_height = 720
-board_length = 512 # MUST BE A MULTIPLE OF 8!! Divisibility by 8 ensures the 64 squares are of integer length
+pygame.init()
+font = pygame.font.SysFont(None, 30)
+
+screen_width = 1500
+screen_height = 880
+board_length = 768 # MUST BE A MULTIPLE OF 8!! Divisibility by 8 ensures the 64 squares are of integer length
 board_x = (screen_width-board_length)//2
 board_y = 100
 screen = pygame.display.set_mode([screen_width, screen_height])
@@ -114,30 +107,43 @@ mouse_up_square = [-1,-1]
 first_square = [-1,-1]
 second_square = [-1,-1]
 
-menu_buttons = [Button("Start",500,300,80,40,"images/start_button.png",start_game)]
-game_buttons = [Button("Flip Board",int((screen_width)*0.75),500,120,40,"images/flip_button.png",flip_board)]
-
 pieces = board_elements.initialise_pieces()
 fen_str = "6k1/2rp1ppp/b2P3n/pp6/5n2/PBN2N2/1P3PPP/R3R1K1 b - - 0 27"
 board = board_elements.Board(pieces)
 selected_piece = [-1,-1]
+
+
+menu_buttons = [Button(screen,500,300,80,40,image=pygame.transform.scale(pygame.image.load("images/start_button.png"),(80,40)),onClick=start_game)]
+
+flip_button = Button(screen,int((screen_width)*0.75),500,120,40,image=pygame.transform.scale(pygame.image.load("images/flip_button.png"),(120,40)),onClick=flip_board,onClickParams=[board])
+turn_label = font.render(str(board.fullmoves),False,(0,0,0))
+game_widgets= [flip_button]
+for button in game_widgets:
+    button.hide()
+
 while running:
+    events = pygame.event.get()
     if on_menu:
-        for event in pygame.event.get():
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
+                '''
             if event.type == pygame.MOUSEBUTTONUP:
                 for button in menu_buttons:
                     mouse_pos = pygame.mouse.get_pos()
                     if button.rect.collidepoint(mouse_pos):
                        button.click_fcn()
+                       '''
         screen.fill((80, 182, 153))
-        for button in menu_buttons:
-            button.draw(screen)
+        pygame_widgets.update(events)
+
         pygame.display.flip()
         continue
-
-    for event in pygame.event.get():
+    for button in menu_buttons:
+        button.hide()
+    for button in game_widgets:
+        button.show()
+    for event in events:
         mouse_pos = pygame.mouse.get_pos()
         x = mouse_pos[0]
         y = mouse_pos[1]
@@ -145,14 +151,9 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_down_square = list(board_square(board,board_x,board_y,board_length,x,y,screen_height)) #square that is mouseddown on
-            for button in game_buttons:
-                if button.rect.collidepoint(mouse_pos):
-                    mouse_down_button = button.name
-        if event.type == pygame.MOUSEBUTTONUP:
-            for button in game_buttons: # execute the function of any button the mouse is over
 
-                if button.rect.collidepoint(mouse_pos) and (mouse_down_button == button.name):
-                    button.click_fcn(board)
+        if event.type == pygame.MOUSEBUTTONUP:
+
             mouse_down_button = ""
             mouse_up_square = list(board_square(board,board_x,board_y,board_length,x,y,screen_height)) # square that is moused up on
             if (mouse_up_square == mouse_down_square): #only register a "click" on a board square if these are equal
@@ -160,15 +161,16 @@ while running:
                 first_square,second_square,mouse_down_square,mouse_up_square)
 
     if(not(first_square ==[-1,-1]) and not(second_square ==[-1,-1])): # if both a first and second square are selected, move the piece on the 1st to the 2nd
+        moving_color = board.pieces[first_square[0]][first_square[1]].color
+        print(board.move_string(first_square,second_square))
         board.move(first_square,second_square,False) # add checks that the move is legal later (if we ever get there)
         first_square = [-1,-1]
         second_square= [-1,-1]
 
     selected_piece = first_square
     screen.fill((140,122,103))
-    draw_board(board, board_x, board_y, board_length,screen,screen_height,selected_piece)
 
-    for button in game_buttons:
-        button.draw(screen)
-    pygame.display.flip()
+    draw_board(board, board_x, board_y, board_length,screen,screen_height,selected_piece)
+    pygame_widgets.update(events)
+    pygame.display.update()
 
