@@ -7,4 +7,7 @@ class Engine():
     def next_move(self,board):
         i = rand.randint(0,6)
         j = rand.randint(0,6)
-        return [i,j],[i,j+1]
+        while(board.pieces[i][j].color != self.color):
+            i = rand.randint(0, 6)
+            j = rand.randint(0, 6)
+        return [i,j],[i,j-1]

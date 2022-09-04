@@ -6,6 +6,7 @@ import pygame_widgets
 from pygame_widgets.button import Button
 from pygame_widgets.button import ButtonArray
 from pygame_widgets.textbox import TextBox
+from pygame_widgets.slider import Slider
 import board_elements
 import computer_engine
 
@@ -51,25 +52,27 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece)
             piece_rect = pygame.Rect(x_coord, y_coord, square_length, square_length)
             screen.blit(piece_img, piece_rect)
 
-def draw_move_history(game_move_strs,x1,y1,box_width,box_height,screen,screen_height,num_moves=30):
+def draw_move_history(game_move_strs,x1,y1,box_width,box_height,screen,screen_height,position_offset,num_moves=30):
+    num_offset = position_offset
+    position_offset = 2*position_offset
     font = pygame.font.SysFont(None, int(40*screen_height/880))
     for i in range(0,num_moves//2):
-        if(len(game_move_strs)>(2*i)+1):
-            first_str = game_move_strs[2*i]
-            second_str = game_move_strs[(2*i)+1]
-        elif(len(game_move_strs)>(2*i)):
-            first_str = game_move_strs[2*i]
+        if(len(game_move_strs)>(2*i)+1+position_offset):
+            first_str = game_move_strs[2*i+position_offset]
+            second_str = game_move_strs[(2*i)+1+position_offset]
+        elif(len(game_move_strs)>(2*i+position_offset)):
+            first_str = game_move_strs[2*i+position_offset]
             second_str = ""
         else:
             first_str = ""
             second_str = ""
         x_coord,y_coord = x1,(y1+i*box_height)
         second_x_coord = x1+box_width
-        number_label = font.render(str(i+1)+".",False,(0,0,0))
+        number_label = font.render(str(i+1+num_offset)+".",False,(0,0,0))
         first_label = font.render(first_str, False, (0, 0, 0))
         second_label = font.render(second_str, False, (0, 0, 0))
 
-        number_rect = pygame.Rect(x_coord - box_height,y_coord+box_height//4,box_height,box_height)
+        number_rect = pygame.Rect(x_coord - int(1.25*box_height),y_coord+box_height//4,box_height,box_height)
         first_rect = pygame.Rect(x_coord,y_coord,box_width,box_height)
         second_rect = pygame.Rect(second_x_coord,y_coord,box_width,box_height)
 
@@ -164,16 +167,19 @@ game_move_strs = []
 selected_piece = [-1,-1]
 
 
-menu_buttons = [Button(screen,500,300,80,40,image=pygame.transform.scale(pygame.image.load("images/start_button.png"),(80,40)),onClick=start_game)]
+menu_buttons = [Button(screen,500,300,80,40,text="Start",fontSize=30,onClick=start_game)]
 
 game_button_width = int(0.08*screen_width)
 game_button_height = int(0.05*screen_height)
 flip_button = Button(screen,int((screen_width)*0.66),int(0.88*screen_height),game_button_width,game_button_height,text="Flip Board",fontSize = 30,onClick=flip_board,onClickParams=[board])
 forward_back_array = ButtonArray(screen,int((screen_width)*0.75),int(0.88*screen_height),2*game_button_width,game_button_height,(2,1),fontSizes = (30,30),texts=("<",">"),onClicks=(change_fen,change_fen),onClickParams=([False],[True]))
-turn_label = font.render(str(board.fullmoves),False,(0,0,0))
-game_widgets= [flip_button,forward_back_array]
 
-player_types = ["Computer","Human"] # first position is black, second position is white
+slider_max = 85
+history_slider = Slider(screen, int((screen_width)*0.93),int(0.1*screen_height+game_button_height//4),game_button_width//4,int(0.75*screen_height-(game_button_height//2)), vertical = True,min=0, max=slider_max, step=1,handleRadius = game_button_width//8)
+history_slider.setValue(slider_max)
+game_widgets= [flip_button,forward_back_array,history_slider]
+
+player_types = ["Human","Human"] # first position is black, second position is white
 engine = computer_engine.Engine(board_elements.Color.BLACK)
 
 for button in game_widgets:
@@ -233,17 +239,21 @@ while running:
     if(at_present_board and player_types[board.color_to_move.value]=="Computer"):
         engine_first,engine_second = engine.next_move(board)
         print(str(engine_first)+" "+str(engine_second))
-        print("Start Col:"+str(board.color_to_move))
+
+        game_move_strs.append(board.move_string(engine_first, engine_second))
         board.move(engine_first,engine_second)
-        print("End Col:"+str(board.color_to_move))
+        game_fens.append(board_elements.generate_fen((board)))
+        fen_to_display += 1
+
 
     selected_piece = first_square
     screen.fill((205,189,163))
 
     board_to_display = board_elements.import_fen(game_fens[fen_to_display])
+    board_to_display.color_at_bottom = board.color_at_bottom
 
     draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece)
-    draw_move_history(game_move_strs,0.75*screen_width,0.1*screen_height,game_button_width,game_button_height,screen,screen_height)
+    draw_move_history(game_move_strs,0.75*screen_width,0.1*screen_height,game_button_width,game_button_height,screen,screen_height,slider_max-history_slider.getValue())
     pygame_widgets.update(events)
     pygame.display.update()
 
