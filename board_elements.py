@@ -1,5 +1,4 @@
 from enum import Enum
-import pygame
 import numpy as np
 import copy
 

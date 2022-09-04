@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="" />
+    <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/board_elements.py" beforeDir="false" afterPath="$PROJECT_DIR$/board_elements.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/chess_ui.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,6 +24,7 @@
   </component>
   <component name="ProjectId" id="2Bhp2SjePifEzOjcHPNwn23oXMI" />
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
@@ -76,7 +81,14 @@
       <option name="project" value="LOCAL" />
       <updated>1662308977700</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Removed some text files...">
+      <created>1662309224345</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1662309224345</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -94,6 +106,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Implemented castling and en passant, as well as a move history bar (can replay the game up to that point)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implemented castling and en passant, as well as a move history bar (can replay the game up to that point)" />
+    <MESSAGE value="Removed some text files..." />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed some text files..." />
   </component>
 </project>

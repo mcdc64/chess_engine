@@ -7,6 +7,7 @@ from pygame_widgets.button import Button
 from pygame_widgets.button import ButtonArray
 from pygame_widgets.textbox import TextBox
 import board_elements
+import computer_engine
 
 import time
 import copy
@@ -171,6 +172,10 @@ flip_button = Button(screen,int((screen_width)*0.66),int(0.88*screen_height),gam
 forward_back_array = ButtonArray(screen,int((screen_width)*0.75),int(0.88*screen_height),2*game_button_width,game_button_height,(2,1),fontSizes = (30,30),texts=("<",">"),onClicks=(change_fen,change_fen),onClickParams=([False],[True]))
 turn_label = font.render(str(board.fullmoves),False,(0,0,0))
 game_widgets= [flip_button,forward_back_array]
+
+player_types = ["Computer","Human"] # first position is black, second position is white
+engine = computer_engine.Engine(board_elements.Color.BLACK)
+
 for button in game_widgets:
     button.hide()
 
@@ -187,7 +192,8 @@ while running:
         pygame.display.update()
         continue
     allow_board_clicks = False
-    if(fen_to_display == len(game_fens)-1): #if the display fen is the current board, allow moves
+    at_present_board = (fen_to_display == len(game_fens)-1)
+    if(at_present_board and player_types[board.color_to_move.value]=="Human"): #if the display fen is the current board, allow moves
         allow_board_clicks = True
     if(not allow_board_clicks): #reset the first and second selected squares each frame to prevent board clicks
         first_square = [-1,-1]
@@ -224,6 +230,12 @@ while running:
         fen_to_display += 1
         first_square = [-1,-1]
         second_square= [-1,-1]
+    if(at_present_board and player_types[board.color_to_move.value]=="Computer"):
+        engine_first,engine_second = engine.next_move(board)
+        print(str(engine_first)+" "+str(engine_second))
+        print("Start Col:"+str(board.color_to_move))
+        board.move(engine_first,engine_second)
+        print("End Col:"+str(board.color_to_move))
 
     selected_piece = first_square
     screen.fill((205,189,163))
