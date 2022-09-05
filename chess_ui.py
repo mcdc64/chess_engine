@@ -7,6 +7,7 @@ from pygame_widgets.button import Button
 from pygame_widgets.button import ButtonArray
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.slider import Slider
+from pygame_widgets.toggle import Toggle
 import board_elements
 import computer_engine
 
@@ -23,9 +24,10 @@ def coords_to_pygame(coords,height):
     return (coords[0],height-coords[1])
 
 
-def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece):
+def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,moving_squares,moving_piece,move_progress):
     square_length = board_length // 8
-
+    origin_square = moving_squares[0]
+    target_square = moving_squares[1]
     for i in range(0, 8):
         for j in range(0, 8):
             curr_col = (80 + 175 * ((i + j) % 2), 150 + 105 * ((i + j) % 2),
@@ -47,10 +49,37 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece)
 
 
             if (curr_piece.piece_type != board_elements.PieceType.EMPTY):
-                piece_filename = "images/" + curr_piece.color.name.lower() + "_" + curr_piece.piece_type.name.lower() + ".png";
+                if([i,j]!=origin_square and [i,j]!=target_square and board.color_at_bottom == board_elements.Color.WHITE):
+                    piece_filename = "images/" + curr_piece.color.name.lower() + "_" + curr_piece.piece_type.name.lower() + ".png"
+                if([7-i,7-j]!=origin_square and [7-i,7-j]!=target_square and board.color_at_bottom == board_elements.Color.BLACK):
+                    piece_filename = "images/" + curr_piece.color.name.lower() + "_" + curr_piece.piece_type.name.lower() + ".png"
+
             piece_img = pygame.transform.scale(pygame.image.load(piece_filename), (square_length, square_length))
             piece_rect = pygame.Rect(x_coord, y_coord, square_length, square_length)
             screen.blit(piece_img, piece_rect)
+
+
+        origin_coords = coords_to_pygame((x1 + (square_length * origin_square[0]), y1 + (square_length * origin_square[1])), screen_height)
+        target_coords = coords_to_pygame((x1 + (square_length * target_square[0]), y1 + (square_length * target_square[1])), screen_height)
+        if (board.color_at_bottom == board_elements.Color.BLACK):
+            origin_coords = coords_to_pygame((x1 + (square_length * (7 - origin_square[0])), y1 + (square_length * (7 - origin_square[1]))),screen_height)
+            target_coords = coords_to_pygame((x1 + (square_length * (7 - target_square[0])), y1 + (square_length * (7 - target_square[1]))),screen_height)
+
+        moving = (target_square != [-1,-1])
+        if (moving):
+            print(origin_coords)
+            print(target_coords)
+            if(0<=move_progress<1):
+                move_x = (1 - move_progress) * origin_coords[0] + move_progress * target_coords[0]
+                move_y = (1 - move_progress) * origin_coords[1] + move_progress * target_coords[1]
+            else:
+                move_x = target_coords[0]
+                move_y = target_coords[1]
+            move_rect = pygame.Rect(move_x, move_y, square_length, square_length)
+
+            move_filename = "images/" + moving_piece.color.name.lower() + "_" + moving_piece.piece_type.name.lower() + ".png"
+            move_img = pygame.transform.scale(pygame.image.load(move_filename), (square_length, square_length))
+            screen.blit(move_img, move_rect)
 
 def draw_move_history(game_move_strs,x1,y1,box_width,box_height,screen,screen_height,position_offset,num_moves=30):
     num_offset = position_offset
@@ -139,6 +168,7 @@ def handle_board_click(board,first_sq, second_sq, mouse_down_sq, mouse_up_sq): #
     return first_sq,second_sq,mouse_down_sq,mouse_up_sq,
 
 pygame.init()
+clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 50)
 
 aspect_ratio = 1.6
@@ -147,7 +177,7 @@ screen_width = aspect_ratio*screen_height
 board_length = int(0.85*screen_height)-int(0.85*screen_height)%8 # MUST BE A MULTIPLE OF 8!! Divisibility by 8 ensures the 64 squares are of integer length
 board_x = (screen_width-board_length)//4
 board_y = 150
-screen = pygame.display.set_mode([screen_width, screen_height])
+screen = pygame.display.set_mode([screen_width, screen_height])#,pygame.FULLSCREEN)
 running = True
 on_menu = True
 
@@ -156,6 +186,13 @@ mouse_down_square = [-1,-1]
 mouse_up_square = [-1,-1]
 first_square = [-1,-1]
 second_square = [-1,-1]
+origin_square = [-1, -1]
+target_square = [-1, -1]
+
+translate_pieces = True #slide moved pieces to their destination instead of "teleporting" them
+move_speed = 5
+move_progress = 1
+moving_piece = board_elements.Piece(board_elements.Color.NONE,board_elements.PieceType.EMPTY)
 
 pieces = board_elements.initialise_pieces()
 fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 8"
@@ -177,15 +214,18 @@ forward_back_array = ButtonArray(screen,int((screen_width)*0.75),int(0.88*screen
 slider_max = 85
 history_slider = Slider(screen, int((screen_width)*0.93),int(0.1*screen_height+game_button_height//4),game_button_width//4,int(0.75*screen_height-(game_button_height//2)), vertical = True,min=0, max=slider_max, step=1,handleRadius = game_button_width//8)
 history_slider.setValue(slider_max)
+
 game_widgets= [flip_button,forward_back_array,history_slider]
 
 player_types = ["Human","Human"] # first position is black, second position is white
 engine = computer_engine.Engine(board_elements.Color.BLACK)
 
-for button in game_widgets:
-    button.hide()
+for widget in game_widgets:
+    widget.hide()
 
 while running:
+
+    delta_time = (clock.tick()/1000.0)
     events = pygame.event.get()
     if on_menu:
         for event in events:
@@ -197,6 +237,16 @@ while running:
 
         pygame.display.update()
         continue
+
+    if(move_progress >= 1):
+        move_progress = 1
+        origin_square = [-1,-1]
+        target_square = [-1,-1]
+    if(move_progress < 1):
+        move_progress += move_speed*delta_time
+
+
+
     allow_board_clicks = False
     at_present_board = (fen_to_display == len(game_fens)-1)
     if(at_present_board and player_types[board.color_to_move.value]=="Human"): #if the display fen is the current board, allow moves
@@ -227,15 +277,23 @@ while running:
                 first_square,second_square,mouse_down_square,mouse_up_square)
 
     if(not(first_square ==[-1,-1]) and not(second_square ==[-1,-1]) and allow_board_clicks): # if both a first and second square are selected, move the piece on the 1st to the 2nd
-        moving_color = board.pieces[first_square[0]][first_square[1]].color
 
+        moving_piece = copy.deepcopy(board.pieces[first_square[0]][first_square[1]])
+        moving_color = moving_piece.color
         game_move_strs.append(board.move_string(first_square, second_square))
         board.move(first_square,second_square) # add checks that the move is legal later (if we ever get there)
+
         game_fens.append(board_elements.generate_fen((board)))
         print(game_fens[-1])
         fen_to_display += 1
+        if(translate_pieces):
+            origin_square = first_square
+            target_square = second_square
+            move_progress = 0
+
         first_square = [-1,-1]
         second_square= [-1,-1]
+
     if(at_present_board and player_types[board.color_to_move.value]=="Computer"):
         engine_first,engine_second = engine.next_move(board)
         print(str(engine_first)+" "+str(engine_second))
@@ -244,7 +302,10 @@ while running:
         board.move(engine_first,engine_second)
         game_fens.append(board_elements.generate_fen((board)))
         fen_to_display += 1
-
+        if(translate_pieces):
+            origin_square = engine_first
+            target_square = engine_second
+            move_progress = 0
 
     selected_piece = first_square
     screen.fill((205,189,163))
@@ -252,8 +313,9 @@ while running:
     board_to_display = board_elements.import_fen(game_fens[fen_to_display])
     board_to_display.color_at_bottom = board.color_at_bottom
 
-    draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece)
+    draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece,[origin_square,target_square],moving_piece,move_progress)
     draw_move_history(game_move_strs,0.75*screen_width,0.1*screen_height,game_button_width,game_button_height,screen,screen_height,slider_max-history_slider.getValue())
+
     pygame_widgets.update(events)
     pygame.display.update()
 
