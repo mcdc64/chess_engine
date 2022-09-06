@@ -85,7 +85,7 @@ class Board():
         if(moving_piece.color == Color.BLACK):
             self.fullmoves += 1
             self.color_to_move = Color.WHITE
-        else:
+        elif(moving_piece.color == Color.WHITE):
             self.color_to_move = Color.BLACK
 
     def move_castle(self,old_position,new_position):
@@ -147,6 +147,11 @@ class Board():
             self.castling_rights = "-"
         return output
 
+    def promote(self,promoting_position,new_piece_type):
+        piece_to_promote = self.pieces[promoting_position[0]][promoting_position[1]]
+
+        color = piece_to_promote.color
+        self.pieces[promoting_position[0]][promoting_position[1]] = Piece(color,new_piece_type)
 
     def castle_str(self,old_position,new_position):
 
@@ -164,7 +169,7 @@ class Board():
             return "O-O-O"
         return "No Move"
 
-    def move_string(self,old_position,new_position,en_passant = False):
+    def move_string(self,old_position,new_position,en_passant = False,promote_choice = PieceType.EMPTY):
         # return the string corresponding to a given move
         # does not currently deal with ambiguities (e.g. two rooks on the same rank or file)
         castling = self.castle_str(old_position,new_position)
@@ -186,6 +191,15 @@ class Board():
         move_str+=(letters[new_position[0]])
 
         move_str+=(str(new_position[1]+1))
+        if(promote_choice != PieceType.EMPTY):
+            if(promote_choice ==PieceType.QUEEN):
+                move_str += "=Q"
+            if(promote_choice ==PieceType.ROOK):
+                move_str += "=R"
+            if(promote_choice ==PieceType.BISHOP):
+                move_str += "=B"
+            if(promote_choice ==PieceType.KNIGHT):
+                move_str += "=N"
         return move_str
 
 
@@ -265,7 +279,7 @@ def import_fen(fen_str): #standardised representation of a chess board using a s
         en_passant_out = [idx,y_val]
     if not(en_passant_str == "-"):
         x_coord = alpha_string.index(en_passant_str[0]) #first char in the string is the rank of the enpassant square
-        y_coord = en_passant_str[1]
+        y_coord = int(en_passant_str[1])-1
         en_passant_out = [x_coord,y_coord]
     halfmoves = int(fen_parts[4]) # no. of halfmoves since last capture or pawn advance. If it gets to 100, there is a draw
     fullmoves = int(fen_parts[5]) # no. of fullmoves since start of game (incremented with every Black move)
