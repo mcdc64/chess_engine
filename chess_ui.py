@@ -9,6 +9,7 @@ from pygame_widgets.textbox import TextBox
 from pygame_widgets.slider import Slider
 from pygame_widgets.toggle import Toggle
 import board_elements
+from board_elements import Board,Color,Piece,PieceType
 import computer_engine
 import move_generator
 
@@ -26,7 +27,7 @@ def coords_to_pygame(coords,height):
 
 
 def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,moving_squares,moving_piece,move_progress):
-    move_choices = move_generator.one_piece_moves(board,selected_piece[0],selected_piece[1])
+    move_choices = [[move[0],move[1]] for move in move_generator.one_pseudo_moves(board,selected_piece[0],selected_piece[1])]
     squares_to_highlight = [choice[1] for choice in move_choices]
     square_length = board_length // 8
     origin_square = moving_squares[0]
@@ -103,8 +104,7 @@ def open_promote_menu(promote_color):
 4* game_button_width, (1, 4),images = promote_imgs, onClicks=(set_promote_piece,set_promote_piece,set_promote_piece,set_promote_piece),
                                 onClickParams=([board_elements.PieceType.QUEEN], [board_elements.PieceType.ROOK],
                                                [board_elements.PieceType.BISHOP], [board_elements.PieceType.KNIGHT]))
-    promote_array.show()
-    pass
+    return promote_array
 
 def set_promote_piece(piece_type):
     global promote_piece
@@ -235,12 +235,15 @@ second_square = [-1,-1]
 origin_square = [-1, -1]
 target_square = [-1, -1]
 
+first_trans_square = [-1,-1]
+second_trans_square = [-1,-1]
+
 translate_pieces = True #slide moved pieces to their destination instead of "teleporting" them
 move_speed = 5
 move_progress = 1
 moving_piece = board_elements.Piece(board_elements.Color.NONE,board_elements.PieceType.EMPTY)
 
-promoting = False
+promoting_menu_open = False
 promote_piece = board_elements.PieceType.EMPTY
 promote_position = [-1,-1]
 
@@ -271,13 +274,14 @@ history_slider.setValue(slider_max)
 
 game_widgets= [flip_button,reset_button,forward_back_array,history_slider,promote_array]
 
-player_types = ["Human","Computer"] # first position is black, second position is white
+player_types = ["Computer","Human"] # first position is black, second position is white
 engine = computer_engine.Engine(board_elements.Color.WHITE)
 first_time = True
 for widget in game_widgets:
     widget.hide()
 
 while running:
+
     board_changed = False
     #print(clock.get_fps())
     delta_time = (clock.tick()/1000.0)
@@ -303,24 +307,23 @@ while running:
 
     if(move_progress >= 1):
         move_progress = 1
-        origin_square = [-1,-1]
-        target_square = [-1,-1]
+        first_trans_square = [-1,-1]
+        second_trans_square = [-1,-1]
     if(move_progress < 1):
         move_progress += move_speed*delta_time
 
-    if(promoting and (promote_piece != board_elements.PieceType.EMPTY)):
+    if(promoting_menu_open and (promote_piece != board_elements.PieceType.EMPTY)):
         print("Promoted to "+str(promote_piece))
-        promoting = False
+        promoting_menu_open = False
         allow_board_clicks = True
-        board.promote(promote_position,promote_piece)
-        game_move_strs.append(last_board.move_string(initial_promote_position,promote_position,promote_choice = promote_piece))
-        game_fens[-1] = (board_elements.generate_fen((board)))
-        promote_piece = board_elements.PieceType.EMPTY
-        board_changed = True
+
+        promote_array.hide()
+
+
 
     allow_board_clicks = False
     at_present_board = (fen_to_display == len(game_fens)-1)
-    if(at_present_board and player_types[board.color_to_move.value]=="Human" and not promoting): #if the display fen is the current board, allow moves
+    if(at_present_board and player_types[board.color_to_move.value]=="Human" and not promoting_menu_open): #if the display fen is the current board, allow moves
         allow_board_clicks = True
     if(not allow_board_clicks): #reset the first and second selected squares each frame to prevent board clicks
         first_square = [-1,-1]
@@ -344,70 +347,86 @@ while running:
                 first_square, second_square, mouse_down_square,mouse_up_square = handle_board_click(board,
                 first_square,second_square,mouse_down_square,mouse_up_square)
 
-    if(not(first_square ==[-1,-1]) and not(second_square ==[-1,-1]) and allow_board_clicks): # if both a first and second square are selected, move the piece on the 1st to the 2nd
+    if(first_square!=[-1,-1] and second_square!=[-1,-1]):
+        origin_square = first_square # make copies of first and second square to prevent the values being overwritten
+        target_square = second_square # need this for when the promotion menu is open
 
 
-        allowed_moves = move_generator.generate_all_moves(board)
-        if([first_square,second_square] in allowed_moves):
+    if(not(origin_square ==[-1,-1]) and not(target_square ==[-1,-1])): # time to make a human move
 
-            moving_piece = copy.deepcopy(board.pieces[first_square[0]][first_square[1]])
-            moving_color = moving_piece.color
-            if (second_square[1] == 7 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.WHITE):
-                open_promote_menu(moving_color)
-                promoting = True
+        moving_piece = copy.deepcopy(board.pieces[origin_square[0]][origin_square[1]])
+        moving_color = moving_piece.color
+
+        pawn_moves = [[move[0],move[1]] for move in move_generator.one_pseudo_moves(board,origin_square[0],origin_square[1])]
+        # if the move requires a promotion, open the promotion menu
+        if (target_square[1] == 7 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.WHITE and not promoting_menu_open):
+            if(promote_piece == PieceType.EMPTY and [origin_square,target_square] in pawn_moves):
+                promote_array = open_promote_menu(moving_color)
+                promote_array.show()
+                promoting_menu_open = True
                 allow_board_clicks = False
-                initial_promote_position = first_square
-                promote_position = second_square
-                last_board = copy.deepcopy(board)
-            if (second_square[1] == 0 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.BLACK):
-                open_promote_menu(moving_color)
-                promoting = True
+                initial_promote_position = origin_square
+                promote_position = target_square
+
+
+        if (target_square[1] == 0 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.BLACK and not promoting_menu_open):
+            if(promote_piece == PieceType.EMPTY and [origin_square,target_square] in pawn_moves):
+                promote_array = open_promote_menu(moving_color)
+                promote_array.show()
+                promoting_menu_open = True
                 allow_board_clicks = False
-                initial_promote_position = first_square
-                promote_position = second_square
-                last_board = copy.deepcopy(board)
-            if not promoting:
-                game_move_strs.append(board.move_string(first_square, second_square))
-            board.move(first_square,second_square) # add checks that the move is legal later (if we ever get there)
+                initial_promote_position = origin_square
+                promote_position = target_square
+
+        #generate allowed moves and check whether or not the given move is allowed
+        allowed_moves = move_generator.generate_pseudo_moves(board)
+        if(([origin_square,target_square,promote_piece] in allowed_moves) and not promoting_menu_open):
+
+            game_move_strs.append(board.move_string(origin_square, target_square, promote_choice=promote_piece))
+            board.move(origin_square,target_square,promote_piece) # add checks that the move is legal later (if we ever get there)
 
             game_fens.append(board_elements.generate_fen((board)))
+            if(promote_piece != board_elements.PieceType.EMPTY):
+                print("Changed promoting piece from "+str(promote_piece)+ " to "+str(board_elements.PieceType.EMPTY))
+                promote_array.hide()
+                promote_piece = board_elements.PieceType.EMPTY
+                board_changed = True
+
             print(game_fens[-1])
             fen_to_display += 1
 
 
             if(translate_pieces):
-                origin_square = first_square
-                target_square = second_square
+                first_trans_square = first_square
+                second_trans_square = second_square
                 move_progress = 0
             board_changed = True
 
-        first_square = [-1,-1]
-        second_square= [-1,-1]
+            origin_square = [-1,-1]
+            target_square= [-1,-1]
+            first_square = [-1,-1]
+            second_square = [-1,-1]
+        elif(([origin_square,target_square,promote_piece]not in allowed_moves) and not(promoting_menu_open or promote_piece!=PieceType.EMPTY)):
+            origin_square = [-1, -1]
+            target_square = [-1, -1]
+            first_square = [-1,-1]
+            second_square = [-1,-1]
+
 
     if(at_present_board and player_types[board.color_to_move.value]=="Computer" and move_progress == 1):
         #allowed_moves = move_generator.generate_all_moves(board)
-        engine_first,engine_second = engine.next_move(board)
+        engine_first,engine_second,engine_promote = engine.next_move(board)
         print(str(engine_first)+" "+str(engine_second))
         comp_moving_piece = board.pieces[engine_first[0]][engine_first[1]]
         last_board = copy.deepcopy(board)
         if(comp_moving_piece.color == board.color_to_move):
-            board.move(engine_first, engine_second)
-
-            if (engine_second[1] == 7 and comp_moving_piece.piece_type == board_elements.PieceType.PAWN and comp_moving_piece.color == board_elements.Color.WHITE):
-                board.promote(engine_second,board_elements.PieceType.QUEEN)
-                game_move_strs.append(last_board.move_string(engine_first, engine_second,promote_choice=board_elements.PieceType.QUEEN))
-                game_fens.append(board_elements.generate_fen((board)))
-            if (engine_second[1] == 0 and comp_moving_piece.piece_type == board_elements.PieceType.PAWN and comp_moving_piece.color == board_elements.Color.BLACK):
-                board.promote(engine_second, board_elements.PieceType.QUEEN)
-                game_move_strs.append(last_board.move_string(engine_first, engine_second,promote_choice=board_elements.PieceType.QUEEN))
-                game_fens.append(board_elements.generate_fen((board)))
-            else:
-                game_move_strs.append(last_board.move_string(engine_first, engine_second))
-                game_fens.append(board_elements.generate_fen((board)))
+            game_move_strs.append(board.move_string(engine_first, engine_second,promote_choice=engine_promote))
+            board.move(engine_first, engine_second,engine_promote)
+            game_fens.append(board_elements.generate_fen((board)))
             fen_to_display += 1
             if(translate_pieces):
-                origin_square = engine_first
-                target_square = engine_second
+                first_trans_square = engine_first
+                second_trans_square = engine_second
                 moving_piece = copy.deepcopy(comp_moving_piece)
                 move_progress = 0
             board_changed = True
@@ -421,7 +440,7 @@ while running:
     board_to_display = board_elements.import_fen(game_fens[fen_to_display])
     board_to_display.color_at_bottom = board.color_at_bottom
 
-    draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece,[origin_square,target_square],moving_piece,move_progress)
+    draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece,[first_trans_square,second_trans_square],moving_piece,move_progress)
     draw_move_history(game_move_strs,0.75*screen_width,0.1*screen_height,game_button_width,game_button_height,screen,screen_height,slider_max-history_slider.getValue())
 
     first_time = False

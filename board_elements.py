@@ -38,7 +38,7 @@ class Board():
         self.halfmoves = halfmoves
         self.fullmoves = fullmoves
         self.color_at_bottom = color_at_bottom # color at the bottom of the board
-    def move(self,old_position,new_position): # move a piece from one position to another
+    def move(self,old_position,new_position,promote_piece): # move a piece from one position to another
         old_x = old_position[0]
         old_y = old_position[1]
         new_x = new_position[0]
@@ -75,6 +75,9 @@ class Board():
 
         self.pieces[old_x][old_y] = Piece(Color.NONE,PieceType.EMPTY)
         self.pieces[new_x][new_y] = moving_piece
+
+        if(promote_piece != PieceType.EMPTY):
+            self.pieces[new_x][new_y] = Piece(self.color_to_move,promote_piece)
 
         #update board elements based on move characteristics
         if(new_piece.piece_type != PieceType.EMPTY or moving_piece.piece_type == PieceType.PAWN):

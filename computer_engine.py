@@ -6,6 +6,6 @@ class Engine():
         self.color = color
 
     def next_move(self,board):
-        allowed_moves = move_generator.generate_all_moves(board)
+        allowed_moves = move_generator.generate_pseudo_moves(board)
         i = rand.randint(0,len(allowed_moves)-1)
         return allowed_moves[i]

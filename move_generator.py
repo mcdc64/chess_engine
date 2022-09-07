@@ -237,7 +237,7 @@ def generate_pseudo_moves(board):
             pseudo_legal_moves += get_king_moves(board, i, j)
     return pseudo_legal_moves
 
-def one_psuedo_moves(board,i,j): #get the pseudo moves of just the piece at i,j (mainly used for highlighting the board)
+def one_pseudo_moves(board,i,j): #get the pseudo moves of just the piece at i,j (mainly used for highlighting the board)
     curr_piece = board.pieces[i][j]
 
     pseudo_legal_moves = []
