@@ -200,7 +200,7 @@ class Board():
 
         color = piece_to_promote.color
         self.pieces[promoting_position[0]][promoting_position[1]] = Piece(color,new_piece_type)
-
+    '''
     def castle_str(self,old_position,new_position):
 
         old_x,old_y = old_position
@@ -227,8 +227,32 @@ class Board():
         old_piece = self.pieces[old_position[0]][old_position[1]]
         nums = [0,1,2,3,4,5,6]
         strs = ["","","N","B","R","Q","K"]
-        move_str+= strs[old_piece.piece_type.value]
         letters = "abcdefgh"
+        move_str+= strs[old_piece.piece_type.value]
+
+        # get all pieces attacking the new square (in case of ambiguity)
+        opposite_board = copy.deepcopy(self)
+        opposite_board.toggle_color()
+        attacker_positions = move_generator.get_attacking_pieces(opposite_board,new_position[0],new_position[1])
+        like_attackers = []
+        for position in attacker_positions:
+            if board.pieces[position[0]][position[1]].piece_type == old_piece.piece_type and position != old_position:
+                like_attackers.append([position[0],position[1]])
+        if(len(like_attackers>0)):
+            rank_enough = True
+            file_enough = True
+            for attacker in like_attackers:
+                if(like_attackers[0] == old_position[0]):
+                    rank_enough = False
+                if(like_attackers[1] == old_position[1]):
+                    file_enough = False
+            if(rank_enough):
+                move_str+= letters[old_position[0]]
+            elif(file_enough):
+                move_str += str(old_position[1]+1)
+            else:
+                move_str += letters[old_position[0]]
+                move_str += str(old_position[1]+1)
 
         new_piece = self.pieces[new_position[0]][new_position[1]]
         if(new_piece.piece_type!=PieceType.EMPTY or en_passant):
@@ -248,8 +272,9 @@ class Board():
                 move_str += "=B"
             if(promote_choice ==PieceType.KNIGHT):
                 move_str += "=N"
-        return move_str
 
+        return move_str
+    '''
     def toggle_color(self):
         if(self.color_to_move==Color.WHITE):
             self.color_to_move = Color.BLACK

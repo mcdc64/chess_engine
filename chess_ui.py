@@ -396,7 +396,7 @@ while running:
 
         if(([origin_square,target_square,promote_piece] in allowed_moves) and not promoting_menu_open):
 
-            game_move_strs.append(board.move_string(origin_square, target_square, promote_choice=promote_piece))
+            game_move_strs.append(move_generator.move_string(board,origin_square, target_square, promote_choice=promote_piece))
             board.move(origin_square,target_square,promote_piece) # add checks that the move is legal later (if we ever get there)
 
             game_fens.append(board_elements.generate_fen((board)))
@@ -429,13 +429,15 @@ while running:
 
     if(at_present_board and player_types[board.color_to_move.value]=="Computer" and move_progress == 1 and not game_over):
 
+
         engine_first,engine_second,engine_promote = engine.next_move(board)
         if(engine_first == [-1,-1]):
             continue
         comp_moving_piece = board.pieces[engine_first[0]][engine_first[1]]
         last_board = copy.deepcopy(board)
         if(comp_moving_piece.color == board.color_to_move):
-            game_move_strs.append(board.move_string(engine_first, engine_second,promote_choice=engine_promote))
+            game_move_strs.append(move_generator.move_string(board,engine_first, engine_second,promote_choice=engine_promote))
+
             board.move(engine_first, engine_second,engine_promote)
             game_fens.append(board_elements.generate_fen((board)))
             fen_to_display += 1
