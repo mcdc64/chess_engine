@@ -175,7 +175,7 @@ def get_pawn_moves(board,i,j):
 
     return out_moves
 
-def get_king_moves(board,i,j):
+def get_king_moves(board,i,j,allow_castling = True):
     eight_squares = [[i+1,j],[i+1,j-1],[i,j-1],[i-1,j-1],[i-1,j],[i-1,j+1],[i,j+1],[i+1,j+1]]
     out_moves = []
     for square in eight_squares:
@@ -183,23 +183,33 @@ def get_king_moves(board,i,j):
             target_piece = board.pieces[square[0]][square[1]]
             if(target_piece.color != board.color_to_move or target_piece.piece_type == PieceType.EMPTY):
                 out_moves.append([[i,j],[square[0],square[1]],PieceType.EMPTY])
-    if(board.color_to_move==Color.WHITE):
-        if("K" in board.castling_rights and board.pieces[5][0].piece_type == PieceType.EMPTY and board.pieces[6][0].piece_type == PieceType.EMPTY):
-            out_moves.append([[i,j],[6,0],PieceType.EMPTY])
-        if ("Q" in board.castling_rights and board.pieces[3][0].piece_type == PieceType.EMPTY and
-                board.pieces[2][0].piece_type == PieceType.EMPTY and
-                board.pieces[1][0].piece_type == PieceType.EMPTY):
-            out_moves.append([[i, j], [1, 0],PieceType.EMPTY])
-            out_moves.append([[i, j], [2, 0],PieceType.EMPTY])
-    if (board.color_to_move == Color.BLACK):
-        if ("q" in board.castling_rights and board.pieces[5][7].piece_type == PieceType.EMPTY and
-                board.pieces[6][7].piece_type == PieceType.EMPTY):
-            out_moves.append([[i, j], [6, 7],PieceType.EMPTY])
-        if ("k" in board.castling_rights and board.pieces[3][7].piece_type == PieceType.EMPTY and
-                board.pieces[2][7].piece_type == PieceType.EMPTY and
-                board.pieces[1][7].piece_type == PieceType.EMPTY):
-            out_moves.append([[i, j], [1, 7],PieceType.EMPTY])
-            out_moves.append([[i, j], [2, 7],PieceType.EMPTY])
+    if(board.color_to_move==Color.WHITE and allow_castling):
+        if(not in_check(board)):
+            if("K" in board.castling_rights and board.pieces[5][0].piece_type == PieceType.EMPTY and board.pieces[6][0].piece_type == PieceType.EMPTY):
+                if (not(is_attacked(board,5,0)) and not is_attacked(board,6,0)):
+                    out_moves.append([[i,j],[6,0],PieceType.EMPTY])
+                    out_moves.append([[i, j], [7, 0], PieceType.EMPTY])
+            if ("Q" in board.castling_rights and board.pieces[3][0].piece_type == PieceType.EMPTY and
+                    board.pieces[2][0].piece_type == PieceType.EMPTY and
+                    board.pieces[1][0].piece_type == PieceType.EMPTY):
+                if (not (is_attacked(board, 3, 0)) and not is_attacked(board, 2, 0) and not is_attacked(board,1,0)):
+                    out_moves.append([[i, j], [1, 0],PieceType.EMPTY])
+                    out_moves.append([[i, j], [2, 0],PieceType.EMPTY])
+                    out_moves.append([[i, j], [0, 0], PieceType.EMPTY])
+    if (board.color_to_move == Color.BLACK and allow_castling):
+        if not in_check(board):
+            if ("q" in board.castling_rights and board.pieces[5][7].piece_type == PieceType.EMPTY and
+                    board.pieces[6][7].piece_type == PieceType.EMPTY):
+                if (not (is_attacked(board, 5, 7)) and not is_attacked(board, 6, 7)):
+                    out_moves.append([[i, j], [6, 7],PieceType.EMPTY])
+                    out_moves.append([[i, j], [7, 7], PieceType.EMPTY])
+            if ("k" in board.castling_rights and board.pieces[3][7].piece_type == PieceType.EMPTY and
+                    board.pieces[2][7].piece_type == PieceType.EMPTY and
+                    board.pieces[1][7].piece_type == PieceType.EMPTY):
+                if (not (is_attacked(board, 3, 7)) and not is_attacked(board, 2, 7) and not is_attacked(board, 1, 7)):
+                    out_moves.append([[i, j], [1, 7],PieceType.EMPTY])
+                    out_moves.append([[i, j], [2, 7],PieceType.EMPTY])
+                    out_moves.append([[i, j], [0, 7], PieceType.EMPTY])
     return out_moves
 
 def get_queen_moves(board,i,j):
@@ -310,7 +320,60 @@ def in_check(board): # returns True if the color to move is currently in check, 
     rook_attack_moves = get_rook_moves(board,i,j)
     # no need to generate the queen moves; can just check if the bishop or rook squares have a queen
     knight_attack_moves = get_knight_moves(board,i,j)
-    king_attack_moves = get_king_moves(board,i,j)
+    king_attack_moves = get_king_moves(board,i,j,False)
+    pawn_attack_moves = []
+    if(board.color_to_move == Color.WHITE and j<7):
+        if(i<7):
+            pawn_attack_moves.append([[i,j],[i+1,j+1],PieceType.EMPTY])
+        if(i>0):
+            pawn_attack_moves.append([[i, j], [i - 1, j + 1], PieceType.EMPTY])
+    if(board.color_to_move == Color.BLACK and j>0):
+        if (i < 7):
+            pawn_attack_moves.append([[i, j], [i + 1, j - 1], PieceType.EMPTY])
+        if (i > 0):
+            pawn_attack_moves.append([[i, j], [i - 1, j - 1], PieceType.EMPTY])
+
+    for move in bishop_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.BISHOP or attack_piece.piece_type == PieceType.QUEEN) and attack_piece.color == opposite_color):
+            return True
+    for move in rook_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.ROOK or attack_piece.piece_type == PieceType.QUEEN) and attack_piece.color == opposite_color):
+            return True
+    for move in knight_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.KNIGHT) and attack_piece.color == opposite_color):
+            return True
+    for move in pawn_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.PAWN) and attack_piece.color == opposite_color):
+            return True
+    for move in king_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.KING) and attack_piece.color == opposite_color):
+            return True
+    return False
+
+def is_attacked(board,i,j): # returns True if square (i,j) is attacked by the opposite colour, false otherwise
+    opposite_color = Color.BLACK
+    if(board.color_to_move == Color.BLACK):
+        opposite_color = Color.WHITE
+    bishop_attack_moves = get_bishop_moves(board,i,j)
+    rook_attack_moves = get_rook_moves(board,i,j)
+    # no need to generate the queen moves; can just check if the bishop or rook squares have a queen
+    knight_attack_moves = get_knight_moves(board,i,j)
+    king_attack_moves = get_king_moves(board,i,j,False)
     pawn_attack_moves = []
     if(board.color_to_move == Color.WHITE and j<7):
         if(i<7):

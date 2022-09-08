@@ -3,9 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/board_elements.py" beforeDir="false" afterPath="$PROJECT_DIR$/board_elements.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chess_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/chess_ui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/computer_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/computer_engine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/move_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/move_generator.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -156,8 +154,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/move_generator.py</url>
-          <line>211</line>
+          <line>221</line>
           <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/move_generator.py</url>
+          <line>302</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
