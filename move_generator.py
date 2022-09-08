@@ -213,11 +213,12 @@ def generate_pseudo_moves(board):
     moving_color = board.color_to_move
     # get all pieces of the moving color
     moving_piece_positions = []
+    if(moving_color == Color.WHITE):
+        moving_piece_positions = board.white_piece_positions
+    if(moving_color == Color.BLACK):
+        moving_piece_positions = board.black_piece_positions
     pseudo_legal_moves = []
-    for i in range(0,8):
-        for j in range(0,8):
-            if(board.pieces[i][j].color == moving_color):
-                moving_piece_positions.append([i,j])
+
 
     for position in moving_piece_positions:
         i = position[0]
@@ -255,4 +256,102 @@ def one_pseudo_moves(board,i,j): #get the pseudo moves of just the piece at i,j 
         pseudo_legal_moves += get_king_moves(board, i, j)
     return pseudo_legal_moves
 
+def one_legal_moves(board,i,j):
+    curr_piece = board.pieces[i][j]
+
+    pseudo_legal_moves = []
+    if (curr_piece.piece_type == PieceType.BISHOP):
+        pseudo_legal_moves += get_bishop_moves(board, i, j)
+    elif (curr_piece.piece_type == PieceType.ROOK):
+        pseudo_legal_moves += get_rook_moves(board, i, j)
+    elif (curr_piece.piece_type == PieceType.QUEEN):
+        pseudo_legal_moves += get_queen_moves(board, i, j)
+    elif (curr_piece.piece_type == PieceType.KNIGHT):
+        pseudo_legal_moves += get_knight_moves(board, i, j)
+    elif (curr_piece.piece_type == PieceType.PAWN):
+        pseudo_legal_moves += get_pawn_moves(board, i, j)
+    elif (curr_piece.piece_type == PieceType.KING):
+        pseudo_legal_moves += get_king_moves(board, i, j)
+    allowed_moves = []
+    for move in pseudo_legal_moves:
+        moved_board = board.hypo_move(move[0], move[1], move[2])
+        moved_board.toggle_color()
+        if (not in_check(moved_board)):
+            allowed_moves.append(move)
+    return allowed_moves
+
+def generate_legal_moves(board):
+    pseudo_moves = generate_pseudo_moves(board)
+    allowed_moves = []
+    for move in pseudo_moves:
+
+        moved_board = board.hypo_move(move[0], move[1], move[2])
+        moved_board.toggle_color()
+        if (not in_check(moved_board)):
+            allowed_moves.append(move)
+    return allowed_moves
+def in_check(board): # returns True if the color to move is currently in check, False otherwise
+    # find the king
+    king_pos = []
+    opposite_color = Color.BLACK
+    if(board.color_to_move == Color.WHITE):
+        for position in board.white_piece_positions:
+            if board.pieces[position[0]][position[1]].piece_type == PieceType.KING:
+                king_pos = position
+    if(board.color_to_move == Color.BLACK):
+        opposite_color = Color.WHITE
+        for position in board.black_piece_positions:
+            if board.pieces[position[0]][position[1]].piece_type == PieceType.KING:
+                king_pos = position
+    i = king_pos[0]
+    j = king_pos[1]
+
+    bishop_attack_moves = get_bishop_moves(board,i,j)
+    rook_attack_moves = get_rook_moves(board,i,j)
+    # no need to generate the queen moves; can just check if the bishop or rook squares have a queen
+    knight_attack_moves = get_knight_moves(board,i,j)
+    king_attack_moves = get_king_moves(board,i,j)
+    pawn_attack_moves = []
+    if(board.color_to_move == Color.WHITE and j<7):
+        if(i<7):
+            pawn_attack_moves.append([[i,j],[i+1,j+1],PieceType.EMPTY])
+        if(i>0):
+            pawn_attack_moves.append([[i, j], [i - 1, j + 1], PieceType.EMPTY])
+    if(board.color_to_move == Color.BLACK and j>0):
+        if (i < 7):
+            pawn_attack_moves.append([[i, j], [i + 1, j - 1], PieceType.EMPTY])
+        if (i > 0):
+            pawn_attack_moves.append([[i, j], [i - 1, j - 1], PieceType.EMPTY])
+
+    for move in bishop_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.BISHOP or attack_piece.piece_type == PieceType.QUEEN) and attack_piece.color == opposite_color):
+            return True
+    for move in rook_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.ROOK or attack_piece.piece_type == PieceType.QUEEN) and attack_piece.color == opposite_color):
+            return True
+    for move in knight_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.KNIGHT) and attack_piece.color == opposite_color):
+            return True
+    for move in pawn_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.PAWN) and attack_piece.color == opposite_color):
+            return True
+    for move in king_attack_moves:
+        attacker_square = move[1]
+        attacker_x,attacker_y = attacker_square[0],attacker_square[1]
+        attack_piece = board.pieces[attacker_x][attacker_y]
+        if((attack_piece.piece_type == PieceType.KING) and attack_piece.color == opposite_color):
+            return True
+    return False
 

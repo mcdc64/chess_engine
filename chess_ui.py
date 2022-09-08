@@ -22,15 +22,18 @@ from enum import Enum
 
 
 
-def coords_to_pygame(coords,height):
+def coords_to_pygame(coords,height): #switches from space coords (positive y is up) to pygame coords (positive y down)
     return (coords[0],height-coords[1])
 
 
 def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,moving_squares,moving_piece,move_progress):
-    move_choices = [[move[0],move[1]] for move in move_generator.one_pseudo_moves(board,selected_piece[0],selected_piece[1])]
-    squares_to_highlight = [choice[1] for choice in move_choices]
+    if(selected_piece!=[-1,-1] and draw_move_choices):
+        move_choices = [[move[0],move[1]] for move in move_generator.one_legal_moves(board,selected_piece[0],selected_piece[1])]
+    else:
+        move_choices = []
+    squares_to_highlight = [choice[1] for choice in move_choices] # all possible squares the selected piece can move to
     square_length = board_length // 8
-    origin_square = moving_squares[0]
+    origin_square = moving_squares[0] # used to calculate the path of the current moving piece if there is one
     target_square = moving_squares[1]
     for i in range(0, 8):
         for j in range(0, 8):
@@ -45,10 +48,11 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,
                                                 screen_height)
             curr_rect = pygame.Rect(x_coord, y_coord, square_length, square_length)
             if(board.color_at_bottom == board_elements.Color.BLACK and selected_piece == [7-i,7-j]):
-                curr_col = (50,200,150)
+                curr_col = (50,200,150) # color the selected piece's square green
             elif (board.color_at_bottom == board_elements.Color.WHITE and selected_piece == [i, j]):
                 curr_col = (50, 200, 150)
             elif((board.color_at_bottom == board_elements.Color.BLACK and [7-i,7-j] in squares_to_highlight)or board.color_at_bottom == board_elements.Color.WHITE and [i, j] in squares_to_highlight):
+                # color the possible move squares differently
                 if((i+j)%2 == 1):
                     curr_col = (200,200,200)
                 else:
@@ -58,7 +62,7 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,
             piece_filename = "images/empty.png"
 
 
-            if (curr_piece.piece_type != board_elements.PieceType.EMPTY):
+            if (curr_piece.piece_type != board_elements.PieceType.EMPTY): # load the images of the different pieces
                 if([i,j]!=origin_square and [i,j]!=target_square and board.color_at_bottom == board_elements.Color.WHITE):
                     piece_filename = "images/" + curr_piece.color.name.lower() + "_" + curr_piece.piece_type.name.lower() + ".png"
                 if([7-i,7-j]!=origin_square and [7-i,7-j]!=target_square and board.color_at_bottom == board_elements.Color.BLACK):
@@ -66,7 +70,7 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,
 
             piece_img = pygame.transform.scale(pygame.image.load(piece_filename), (square_length, square_length))
             piece_rect = pygame.Rect(x_coord, y_coord, square_length, square_length)
-            screen.blit(piece_img, piece_rect)
+            screen.blit(piece_img, piece_rect) # draw each piece...
 
 
         origin_coords = coords_to_pygame((x1 + (square_length * origin_square[0]), y1 + (square_length * origin_square[1])), screen_height)
@@ -78,7 +82,7 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,
         moving = (target_square != [-1,-1])
         if (moving):
 
-            if(0<=move_progress<1):
+            if(0<=move_progress<1): # linear weight the origin and target coords by move_progress
                 move_x = (1 - move_progress) * origin_coords[0] + move_progress * target_coords[0]
                 move_y = (1 - move_progress) * origin_coords[1] + move_progress * target_coords[1]
             else:
@@ -88,9 +92,9 @@ def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,
 
             move_filename = "images/" + moving_piece.color.name.lower() + "_" + moving_piece.piece_type.name.lower() + ".png"
             move_img = pygame.transform.scale(pygame.image.load(move_filename), (square_length, square_length))
-            screen.blit(move_img, move_rect)
+            screen.blit(move_img, move_rect) # draw the moving piece
 
-def open_promote_menu(promote_color):
+def open_promote_menu(promote_color): # allow users to promote when a pawn reaches the end of the board
     global promote_array,game_button_width,game_button_height
     if(promote_color == board_elements.Color.BLACK):
         img_names = ["images/black_queen.png","images/black_rook.png","images/black_bishop.png","images/black_knight.png"]
@@ -113,6 +117,7 @@ def set_promote_piece(piece_type):
     promote_array.hide()
 
 def draw_move_history(game_move_strs,x1,y1,box_width,box_height,screen,screen_height,position_offset,num_moves=30):
+    # draws the record of moves played during the game
     num_offset = position_offset
     position_offset = 2*position_offset
     font = pygame.font.SysFont(None, int(40*screen_height/880))
@@ -172,11 +177,13 @@ def flip_board():
     else:
         board.color_at_bottom=board_elements.Color.WHITE
 
-def reset_game():
-    global board,game_fens,fen_to_display,first_square,second_square,game_move_strs
+def reset_game(): # start the game over in case we want to play again
+    global board,game_fens,fen_to_display,first_square,second_square,game_move_strs,game_over,allowed_moves
+    game_over = False
     bottom_col = board.color_at_bottom
     board = board_elements.Board(board_elements.initialise_pieces(),color_at_bottom=bottom_col)
     game_fens = [board_elements.generate_fen(board)]
+    allowed_moves = move_generator.generate_legal_moves(board)
     game_move_strs = []
     fen_to_display = 0
     first_square = [-1,-1]
@@ -238,19 +245,24 @@ target_square = [-1, -1]
 first_trans_square = [-1,-1]
 second_trans_square = [-1,-1]
 
+draw_move_choices = True
 translate_pieces = True #slide moved pieces to their destination instead of "teleporting" them
 move_speed = 5
 move_progress = 1
 moving_piece = board_elements.Piece(board_elements.Color.NONE,board_elements.PieceType.EMPTY)
 
+game_over = False
 promoting_menu_open = False
 promote_piece = board_elements.PieceType.EMPTY
 promote_position = [-1,-1]
 
 pieces = board_elements.initialise_pieces()
-fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 8"
-#board = board_elements.import_fen(fen_str)
-board = board_elements.Board(pieces)
+#fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 8"
+fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
+#fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
+board = board_elements.import_fen(fen_str)
+allowed_moves = move_generator.generate_legal_moves(board)
+#board = board_elements.Board(pieces)
 game_fens = [board_elements.generate_fen(board)] # save all fen strings for the board so it can be replayed
 fen_to_display = 0 # the current fen being displayed
 game_move_strs = []
@@ -274,7 +286,7 @@ history_slider.setValue(slider_max)
 
 game_widgets= [flip_button,reset_button,forward_back_array,history_slider,promote_array]
 
-player_types = ["Computer","Human"] # first position is black, second position is white
+player_types = ["Human","Human"] # first position is black, second position is white
 engine = computer_engine.Engine(board_elements.Color.WHITE)
 first_time = True
 for widget in game_widgets:
@@ -283,7 +295,7 @@ for widget in game_widgets:
 while running:
 
     board_changed = False
-    #print(clock.get_fps())
+    print(clock.get_fps())
     delta_time = (clock.tick()/1000.0)
     events = pygame.event.get()
     if on_menu:
@@ -298,7 +310,7 @@ while running:
         continue
 
     if(first_time):
-
+        allowed_moves = move_generator.generate_legal_moves(board)
         for button in menu_buttons:
             button.hide()
         for button in game_widgets:
@@ -313,7 +325,6 @@ while running:
         move_progress += move_speed*delta_time
 
     if(promoting_menu_open and (promote_piece != board_elements.PieceType.EMPTY)):
-        print("Promoted to "+str(promote_piece))
         promoting_menu_open = False
         allow_board_clicks = True
 
@@ -323,7 +334,7 @@ while running:
 
     allow_board_clicks = False
     at_present_board = (fen_to_display == len(game_fens)-1)
-    if(at_present_board and player_types[board.color_to_move.value]=="Human" and not promoting_menu_open): #if the display fen is the current board, allow moves
+    if(at_present_board and player_types[board.color_to_move.value]=="Human" and not promoting_menu_open and not game_over): #if the display fen is the current board, allow moves
         allow_board_clicks = True
     if(not allow_board_clicks): #reset the first and second selected squares each frame to prevent board clicks
         first_square = [-1,-1]
@@ -352,12 +363,13 @@ while running:
         target_square = second_square # need this for when the promotion menu is open
 
 
-    if(not(origin_square ==[-1,-1]) and not(target_square ==[-1,-1])): # time to make a human move
+
+    if(not(origin_square ==[-1,-1]) and not(target_square ==[-1,-1]) and not game_over): # time to make a human move
 
         moving_piece = copy.deepcopy(board.pieces[origin_square[0]][origin_square[1]])
         moving_color = moving_piece.color
 
-        pawn_moves = [[move[0],move[1]] for move in move_generator.one_pseudo_moves(board,origin_square[0],origin_square[1])]
+        pawn_moves = [[move[0],move[1]] for move in move_generator.one_legal_moves(board,origin_square[0],origin_square[1])]
         # if the move requires a promotion, open the promotion menu
         if (target_square[1] == 7 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.WHITE and not promoting_menu_open):
             if(promote_piece == PieceType.EMPTY and [origin_square,target_square] in pawn_moves):
@@ -379,7 +391,8 @@ while running:
                 promote_position = target_square
 
         #generate allowed moves and check whether or not the given move is allowed
-        allowed_moves = move_generator.generate_pseudo_moves(board)
+        allowed_moves = move_generator.generate_legal_moves(board)
+
         if(([origin_square,target_square,promote_piece] in allowed_moves) and not promoting_menu_open):
 
             game_move_strs.append(board.move_string(origin_square, target_square, promote_choice=promote_piece))
@@ -387,7 +400,7 @@ while running:
 
             game_fens.append(board_elements.generate_fen((board)))
             if(promote_piece != board_elements.PieceType.EMPTY):
-                print("Changed promoting piece from "+str(promote_piece)+ " to "+str(board_elements.PieceType.EMPTY))
+
                 promote_array.hide()
                 promote_piece = board_elements.PieceType.EMPTY
                 board_changed = True
@@ -413,10 +426,11 @@ while running:
             second_square = [-1,-1]
 
 
-    if(at_present_board and player_types[board.color_to_move.value]=="Computer" and move_progress == 1):
-        #allowed_moves = move_generator.generate_all_moves(board)
+    if(at_present_board and player_types[board.color_to_move.value]=="Computer" and move_progress == 1 and not game_over):
+
         engine_first,engine_second,engine_promote = engine.next_move(board)
-        print(str(engine_first)+" "+str(engine_second))
+        if(engine_first == [-1,-1]):
+            continue
         comp_moving_piece = board.pieces[engine_first[0]][engine_first[1]]
         last_board = copy.deepcopy(board)
         if(comp_moving_piece.color == board.color_to_move):
@@ -433,8 +447,14 @@ while running:
 
     if(selected_piece != first_square):
         board_changed = True
-    selected_piece = first_square
+        selected_piece = first_square
 
+    if(board_changed):
+        allowed_moves = move_generator.generate_legal_moves(board)
+
+    if(allowed_moves == [] or board.halfmoves == 100):
+        allow_board_clicks = False
+        game_over = True
     screen.fill((205,189,163))
 
     board_to_display = board_elements.import_fen(game_fens[fen_to_display])
@@ -443,6 +463,18 @@ while running:
     draw_board(board_to_display, board_x, board_y, board_length,screen,screen_height,selected_piece,[first_trans_square,second_trans_square],moving_piece,move_progress)
     draw_move_history(game_move_strs,0.75*screen_width,0.1*screen_height,game_button_width,game_button_height,screen,screen_height,slider_max-history_slider.getValue())
 
+
+    if game_over:
+        if(move_generator.in_check(board)):
+            if(board.color_to_move == Color.WHITE):
+                win_text = font.render("Checkmate - Black wins!",30,(0,0,0))
+                screen.blit(win_text,(int(0.4*screen_width), int(0.05*screen_height)))
+            if (board.color_to_move == Color.BLACK):
+                win_text = font.render("Checkmate - White wins!",30,(0,0,0))
+                screen.blit(win_text, (int(0.4*screen_width), int(0.05*screen_height)))
+        else:
+            stale_text = font.render("Stalemate!",30,(0,0,0))
+            screen.blit(stale_text, (int(0.4*screen_width), int(0.05*screen_height)))
     first_time = False
     pygame_widgets.update(events)
     pygame.display.update()

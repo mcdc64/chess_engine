@@ -32,6 +32,14 @@ class Piece():
 class Board():
     def __init__(self,pieces,color_at_bottom=Color.WHITE,color_to_move=Color.WHITE,castling_rights="KQkq",en_passant=[-1,-1],halfmoves = 0,fullmoves = 1):
         self.pieces = pieces
+        self.white_piece_positions = []
+        self.black_piece_positions = []
+        for i in range(0,8):
+            for j in range(0,8):
+                if(pieces[i][j].color == Color.WHITE):
+                    self.white_piece_positions.append([i,j])
+                if(pieces[i][j].color == Color.BLACK):
+                    self.black_piece_positions.append([i,j])
         self.color_to_move = color_to_move # the color whose turn it is
         self.en_passant = en_passant
         self.castling_rights = castling_rights
@@ -62,9 +70,10 @@ class Board():
 
             if(moving_piece.color == Color.WHITE):
                 self.pieces[self.en_passant[0]][self.en_passant[1]-1] = Piece(Color.NONE,PieceType.EMPTY)
+                self.black_piece_positions.remove([self.en_passant[0],self.en_passant[1]-1])
             if(moving_piece.color == Color.BLACK):
                 self.pieces[self.en_passant[0]][self.en_passant[1]+1] = Piece(Color.NONE,PieceType.EMPTY)
-
+                self.white_piece_positions.remove([self.en_passant[0], self.en_passant[1] + 1])
         if (moving_piece.piece_type==PieceType.PAWN and np.abs(new_y-old_y)==2): # if the move is a pawn moving 2 spaces, set en passant square
             if(moving_piece.color == Color.WHITE):
                 self.en_passant = [old_x,old_y+1]
@@ -73,8 +82,20 @@ class Board():
         else:
             self.en_passant = [-1,-1]
 
+        if(self.pieces[new_x][new_y].piece_type != PieceType.EMPTY):
+            if(moving_piece.color == Color.WHITE):
+                self.black_piece_positions.remove([new_x,new_y])
+            if (moving_piece.color == Color.BLACK):
+                self.white_piece_positions.remove([new_x, new_y])
         self.pieces[old_x][old_y] = Piece(Color.NONE,PieceType.EMPTY)
         self.pieces[new_x][new_y] = moving_piece
+        if(moving_piece.color == Color.WHITE):
+            self.white_piece_positions.remove([old_x,old_y])
+            self.white_piece_positions.append([new_x,new_y])
+        if(moving_piece.color == Color.BLACK):
+
+            self.black_piece_positions.remove([old_x,old_y])
+            self.black_piece_positions.append([new_x, new_y])
 
         if(promote_piece != PieceType.EMPTY):
             self.pieces[new_x][new_y] = Piece(self.color_to_move,promote_piece)
@@ -91,10 +112,18 @@ class Board():
         elif(moving_piece.color == Color.WHITE):
             self.color_to_move = Color.BLACK
 
+    def hypo_move(self,old_position,new_position,promote_piece): # hypothetical move... return the RESULT of moving a piece (without actually changing the board)
+        new_board = copy.deepcopy(self)
+
+        new_board.move(old_position, new_position, promote_piece)
+        return new_board
+
+
+
     def move_castle(self,old_position,new_position):
         # Handles castling possibilities when the "move" method is called.
         # Castles if the move represents one
-        # Does NOT prevent an attempted castle if it is not allowed (the future "is_pseudo_legal" method should do that)
+        # Does NOT prevent an attempted castle if it is not allowed
         old_x,old_y = old_position
         new_x,new_y = new_position
         moving_piece = copy.deepcopy(self.pieces[old_x][old_y])
@@ -106,19 +135,31 @@ class Board():
             self.pieces[5][0] = Piece(Color.WHITE,PieceType.ROOK)
             self.pieces[6][0] = Piece(Color.WHITE,PieceType.KING)
             self.pieces[7][0] = Piece(Color.NONE,PieceType.EMPTY)
+            if [4, 0] in self.white_piece_positions: self.white_piece_positions.remove([4, 0])
+            if [7, 0] in self.white_piece_positions: self.white_piece_positions.remove([7, 0])
+            self.white_piece_positions.append([5,0])
+            self.white_piece_positions.append([6,0])
             output = True
         elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 0] and (new_position == [0, 0] or new_position == [1, 0] or new_position == [2,0])):
             self.pieces[0][0] = Piece(Color.NONE, PieceType.EMPTY)
-            self.pieces[1][0] = Piece(Color.WHITE,PieceType.EMPTY)
+            self.pieces[1][0] = Piece(Color.NONE,PieceType.EMPTY)
             self.pieces[2][0] = Piece(Color.WHITE,PieceType.KING)
             self.pieces[3][0] = Piece(Color.WHITE,PieceType.ROOK)
             self.pieces[4][0] = Piece(Color.NONE, PieceType.EMPTY)
+            if [4, 0] in self.white_piece_positions: self.white_piece_positions.remove([4, 0])
+            if [0, 0] in self.white_piece_positions: self.white_piece_positions.remove([0, 0])
+            self.white_piece_positions.append([2,0])
+            self.white_piece_positions.append([3,0])
             output = True
         elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 7] and (new_position == [6, 7] or new_position == [7, 7])):
             self.pieces[4][7] = Piece(Color.NONE, PieceType.EMPTY)
             self.pieces[5][7] = Piece(Color.BLACK,PieceType.ROOK)
             self.pieces[6][7] = Piece(Color.BLACK,PieceType.KING)
             self.pieces[7][7] = Piece(Color.NONE,PieceType.EMPTY)
+            if [4, 7] in self.black_piece_positions: self.black_piece_positions.remove([4, 7])
+            if [7, 7] in self.black_piece_positions: self.black_piece_positions.remove([7, 7])
+            self.black_piece_positions.append([5,7])
+            self.black_piece_positions.append([6,7])
             output = True
         elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 7] and (new_position == [0, 7] or new_position == [1, 7] or new_position == [2,7])):
             self.pieces[0][7] = Piece(Color.NONE, PieceType.EMPTY)
@@ -126,6 +167,10 @@ class Board():
             self.pieces[2][7] = Piece(Color.BLACK,PieceType.KING)
             self.pieces[3][7] = Piece(Color.BLACK,PieceType.ROOK)
             self.pieces[4][7] = Piece(Color.NONE, PieceType.EMPTY)
+            if [4, 7] in self.black_piece_positions: self.black_piece_positions.remove([4, 7])
+            if [0, 7] in self.black_piece_positions: self.black_piece_positions.remove([0, 7])
+            self.black_piece_positions.append([2,7])
+            self.black_piece_positions.append([3,7])
             output = True
 
         # check if the white king has moved from its starting spot
@@ -173,7 +218,7 @@ class Board():
         return "No Move"
 
     def move_string(self,old_position,new_position,en_passant = False,promote_choice = PieceType.EMPTY):
-        # return the string corresponding to a given move
+        # return the string corresponding to a given (hypothetical) move; does NOT execute the move
         # does not currently deal with ambiguities (e.g. two rooks on the same rank or file)
         castling = self.castle_str(old_position,new_position)
         if(castling !="No Move"):
@@ -205,6 +250,11 @@ class Board():
                 move_str += "=N"
         return move_str
 
+    def toggle_color(self):
+        if(self.color_to_move==Color.WHITE):
+            self.color_to_move = Color.BLACK
+        elif(self.color_to_move==Color.BLACK):
+            self.color_to_move = Color.WHITE
 
 
 def initialise_pieces(): #initialise the starting position of a chessboard. Return the corresponding piece array

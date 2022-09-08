@@ -151,4 +151,15 @@
     <MESSAGE value="Changed move generator to include a field for promotion piece" />
     <option name="LAST_COMMIT_MESSAGE" value="Changed move generator to include a field for promotion piece" />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/move_generator.py</url>
+          <line>211</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
 </project>
