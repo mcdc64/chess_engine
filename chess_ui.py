@@ -260,10 +260,10 @@ pieces = board_elements.initialise_pieces()
 #fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 8"
 fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
 #fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
-fen_str = "rnbqkbnr/pppppppp/8/8/8/6q1/PPPPPP1P/RNBQK2R w KQkq - 0 1"
+fen_str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
 board = board_elements.import_fen(fen_str)
 allowed_moves = move_generator.generate_legal_moves(board)
-#board = board_elements.Board(pieces)
+board = board_elements.Board(pieces)
 game_fens = [board_elements.generate_fen(board)] # save all fen strings for the board so it can be replayed
 fen_to_display = 0 # the current fen being displayed
 game_move_strs = []
@@ -296,7 +296,7 @@ for widget in game_widgets:
 while running:
 
     board_changed = False
-    print(clock.get_fps())
+    #print(clock.get_fps())
     delta_time = (clock.tick()/1000.0)
     events = pygame.event.get()
     if on_menu:
@@ -400,6 +400,7 @@ while running:
             board.move(origin_square,target_square,promote_piece) # add checks that the move is legal later (if we ever get there)
 
             game_fens.append(board_elements.generate_fen((board)))
+            print("Castling rights: "+str(board.castling_rights))
             if(promote_piece != board_elements.PieceType.EMPTY):
 
                 promote_array.hide()

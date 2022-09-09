@@ -100,6 +100,8 @@ class Board():
         if(promote_piece != PieceType.EMPTY):
             self.pieces[new_x][new_y] = Piece(self.color_to_move,promote_piece)
 
+        self.check_castling_rights()
+
         #update board elements based on move characteristics
         if(new_piece.piece_type != PieceType.EMPTY or moving_piece.piece_type == PieceType.PAWN):
             #either of the above conditions revert the number of halfmoves to 0
@@ -118,8 +120,27 @@ class Board():
         new_board.move(old_position, new_position, promote_piece)
         return new_board
 
+    def check_castling_rights(self):
+        # check if the white king has moved from its starting spot
+        if ((self.pieces[4][0].piece_type != PieceType.KING) or (self.pieces[4][0].color != Color.WHITE)):
+            self.castling_rights = self.castling_rights.replace("K", "")
+            self.castling_rights = self.castling_rights.replace("Q", "")
+        # Repeat for the two white rooks, and their black counterparts
+        if (self.pieces[7][0].piece_type != PieceType.ROOK or (self.pieces[7][0].color != Color.WHITE)):
+            self.castling_rights = self.castling_rights.replace("K", "")
+        if (self.pieces[0][0].piece_type != PieceType.ROOK or (self.pieces[0][0].color != Color.WHITE)):
+            self.castling_rights = self.castling_rights.replace("Q", "")
+        # Black king and rooks
+        if ((self.pieces[4][7].piece_type != PieceType.KING) or (self.pieces[4][7].color != Color.BLACK)):
+            self.castling_rights = self.castling_rights.replace("k", "")
+            self.castling_rights = self.castling_rights.replace("q", "")
 
-
+        if (self.pieces[7][7].piece_type != PieceType.ROOK or (self.pieces[7][7].color != Color.BLACK)):
+            self.castling_rights = self.castling_rights.replace("k", "")
+        if (self.pieces[0][7].piece_type != PieceType.ROOK or (self.pieces[0][7].color != Color.BLACK)):
+            self.castling_rights = self.castling_rights.replace("q", "")
+        if (self.castling_rights == ""):  # if all castling rights are removed, make the string a hyphen
+            self.castling_rights = "-"
     def move_castle(self,old_position,new_position):
         # Handles castling possibilities when the "move" method is called.
         # Castles if the move represents one
@@ -179,6 +200,7 @@ class Board():
             self.castling_rights = self.castling_rights.replace("Q", "")
         # Repeat for the two white rooks, and their black counterparts
         if(self.pieces[7][0].piece_type != PieceType.ROOK or(self.pieces[7][0].color != Color.WHITE)):
+
             self.castling_rights = self.castling_rights.replace("K","")
         if (self.pieces[0][0].piece_type != PieceType.ROOK or (self.pieces[0][0].color != Color.WHITE)):
             self.castling_rights = self.castling_rights.replace("Q", "")

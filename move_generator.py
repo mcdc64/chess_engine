@@ -189,28 +189,27 @@ def get_king_moves(board,i,j,allow_castling = True):
             if("K" in board.castling_rights and board.pieces[5][0].piece_type == PieceType.EMPTY and board.pieces[6][0].piece_type == PieceType.EMPTY):
                 if (not(is_attacked(board,5,0)) and not is_attacked(board,6,0)):
                     out_moves.append([[i,j],[6,0],PieceType.EMPTY])
-                    out_moves.append([[i, j], [7, 0], PieceType.EMPTY])
+
             if ("Q" in board.castling_rights and board.pieces[3][0].piece_type == PieceType.EMPTY and
                     board.pieces[2][0].piece_type == PieceType.EMPTY and
                     board.pieces[1][0].piece_type == PieceType.EMPTY):
                 if (not (is_attacked(board, 3, 0)) and not is_attacked(board, 2, 0) and not is_attacked(board,1,0)):
-                    out_moves.append([[i, j], [1, 0],PieceType.EMPTY])
+
                     out_moves.append([[i, j], [2, 0],PieceType.EMPTY])
-                    out_moves.append([[i, j], [0, 0], PieceType.EMPTY])
+
     if (board.color_to_move == Color.BLACK and allow_castling):
         if not in_check(board):
             if ("q" in board.castling_rights and board.pieces[5][7].piece_type == PieceType.EMPTY and
                     board.pieces[6][7].piece_type == PieceType.EMPTY):
                 if (not (is_attacked(board, 5, 7)) and not is_attacked(board, 6, 7)):
                     out_moves.append([[i, j], [6, 7],PieceType.EMPTY])
-                    out_moves.append([[i, j], [7, 7], PieceType.EMPTY])
+
             if ("k" in board.castling_rights and board.pieces[3][7].piece_type == PieceType.EMPTY and
                     board.pieces[2][7].piece_type == PieceType.EMPTY and
                     board.pieces[1][7].piece_type == PieceType.EMPTY):
                 if (not (is_attacked(board, 3, 7)) and not is_attacked(board, 2, 7) and not is_attacked(board, 1, 7)):
-                    out_moves.append([[i, j], [1, 7],PieceType.EMPTY])
                     out_moves.append([[i, j], [2, 7],PieceType.EMPTY])
-                    out_moves.append([[i, j], [0, 7], PieceType.EMPTY])
+
     return out_moves
 
 def get_queen_moves(board,i,j):
