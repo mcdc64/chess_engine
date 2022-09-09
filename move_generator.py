@@ -476,8 +476,8 @@ def castle_str(board,old_position,new_position):
 
     old_x,old_y = old_position
     new_x,new_y = new_position
-    moving_piece = copy.deepcopy(board.pieces[old_x][old_y])
-    new_piece = copy.deepcopy(board.pieces[new_x][new_y])
+    moving_piece = board.pieces[old_x][old_y]
+    new_piece = board.pieces[new_x][new_y]
     if (moving_piece.piece_type == PieceType.KING and old_position == [4, 0] and (new_position == [6, 0] or new_position == [7, 0])):
         return "O-O"
     elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 0] and (new_position == [0, 0] or new_position == [1, 0] or new_position == [2,0])):

@@ -2,10 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="Changed move generator to include a field for promotion piece">
-      <change afterPath="$PROJECT_DIR$/generator_test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/simple_board.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/simple_move_gen.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/board_elements.py" beforeDir="false" afterPath="$PROJECT_DIR$/board_elements.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chess_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/chess_ui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generator_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/generator_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/move_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/move_generator.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -42,7 +44,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.moves_test">
+  <component name="RunManager" selected="Python.chess">
     <configuration name="chess" type="PythonConfigurationType" factoryName="Python">
       <module name="chess_engine" />
       <option name="INTERPRETER_OPTIONS" value="" />

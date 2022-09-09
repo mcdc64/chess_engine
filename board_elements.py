@@ -2,6 +2,8 @@ from enum import Enum
 import numpy as np
 import copy
 
+from simple_board import SimpleBoard
+
 class Color(Enum):
     BLACK = 0
     WHITE = 1
@@ -46,13 +48,14 @@ class Board():
         self.halfmoves = halfmoves
         self.fullmoves = fullmoves
         self.color_at_bottom = color_at_bottom # color at the bottom of the board
+
     def move(self,old_position,new_position,promote_piece): # move a piece from one position to another
         old_x = old_position[0]
         old_y = old_position[1]
         new_x = new_position[0]
         new_y = new_position[1]
-        moving_piece = copy.deepcopy(self.pieces[old_x][old_y])
-        new_piece = copy.deepcopy(self.pieces[new_x][new_y])
+        moving_piece = self.pieces[old_x][old_y]
+        new_piece = self.pieces[new_x][new_y]
         # handle the four different castling possibilities
         castling = self.move_castle(old_position,new_position)
         if(castling): #if a move results from calling move_castle, end the function there
@@ -63,6 +66,17 @@ class Board():
                 self.color_to_move = Color.BLACK
             return True
 
+        #update board elements based on move characteristics
+        if(new_piece.piece_type != PieceType.EMPTY or moving_piece.piece_type == PieceType.PAWN):
+            #either of the above conditions revert the number of halfmoves to 0
+            self.halfmoves = 0
+        else:
+            self.halfmoves += 1
+        if(moving_piece.color == Color.BLACK):
+            self.fullmoves += 1
+            self.color_to_move = Color.WHITE
+        elif(moving_piece.color == Color.WHITE):
+            self.color_to_move = Color.BLACK
 
 
         if (moving_piece.piece_type == PieceType.PAWN and np.abs(new_x-old_x)==1 and np.abs(new_y-old_y)==1 and new_position == self.en_passant):
@@ -102,17 +116,7 @@ class Board():
 
         self.check_castling_rights()
 
-        #update board elements based on move characteristics
-        if(new_piece.piece_type != PieceType.EMPTY or moving_piece.piece_type == PieceType.PAWN):
-            #either of the above conditions revert the number of halfmoves to 0
-            self.halfmoves = 0
-        else:
-            self.halfmoves += 1
-        if(moving_piece.color == Color.BLACK):
-            self.fullmoves += 1
-            self.color_to_move = Color.WHITE
-        elif(moving_piece.color == Color.WHITE):
-            self.color_to_move = Color.BLACK
+
 
     def hypo_move(self,old_position,new_position,promote_piece): # hypothetical move... return the RESULT of moving a piece (without actually changing the board)
         new_board = copy.deepcopy(self)
@@ -217,92 +221,52 @@ class Board():
             self.castling_rights = "-"
         return output
 
-    def promote(self,promoting_position,new_piece_type):
-        piece_to_promote = self.pieces[promoting_position[0]][promoting_position[1]]
-
-        color = piece_to_promote.color
-        self.pieces[promoting_position[0]][promoting_position[1]] = Piece(color,new_piece_type)
-    '''
-    def castle_str(self,old_position,new_position):
-
-        old_x,old_y = old_position
-        new_x,new_y = new_position
-        moving_piece = copy.deepcopy(self.pieces[old_x][old_y])
-        new_piece = copy.deepcopy(self.pieces[new_x][new_y])
-        if (moving_piece.piece_type == PieceType.KING and old_position == [4, 0] and (new_position == [6, 0] or new_position == [7, 0])):
-            return "O-O"
-        elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 0] and (new_position == [0, 0] or new_position == [1, 0] or new_position == [2,0])):
-            return "O-O-O"
-        if (moving_piece.piece_type == PieceType.KING and old_position == [4, 7] and (new_position == [6, 7] or new_position == [7, 7])):
-            return "O-O"
-        elif (moving_piece.piece_type == PieceType.KING and old_position == [4, 7] and (new_position == [0, 7] or new_position == [1, 7] or new_position == [2,7])):
-            return "O-O-O"
-        return "No Move"
-
-    def move_string(self,old_position,new_position,en_passant = False,promote_choice = PieceType.EMPTY):
-        # return the string corresponding to a given (hypothetical) move; does NOT execute the move
-        # does not currently deal with ambiguities (e.g. two rooks on the same rank or file)
-        castling = self.castle_str(old_position,new_position)
-        if(castling !="No Move"):
-            return castling
-        move_str = ""
-        old_piece = self.pieces[old_position[0]][old_position[1]]
-        nums = [0,1,2,3,4,5,6]
-        strs = ["","","N","B","R","Q","K"]
-        letters = "abcdefgh"
-        move_str+= strs[old_piece.piece_type.value]
-
-        # get all pieces attacking the new square (in case of ambiguity)
-        opposite_board = copy.deepcopy(self)
-        opposite_board.toggle_color()
-        attacker_positions = move_generator.get_attacking_pieces(opposite_board,new_position[0],new_position[1])
-        like_attackers = []
-        for position in attacker_positions:
-            if board.pieces[position[0]][position[1]].piece_type == old_piece.piece_type and position != old_position:
-                like_attackers.append([position[0],position[1]])
-        if(len(like_attackers>0)):
-            rank_enough = True
-            file_enough = True
-            for attacker in like_attackers:
-                if(like_attackers[0] == old_position[0]):
-                    rank_enough = False
-                if(like_attackers[1] == old_position[1]):
-                    file_enough = False
-            if(rank_enough):
-                move_str+= letters[old_position[0]]
-            elif(file_enough):
-                move_str += str(old_position[1]+1)
-            else:
-                move_str += letters[old_position[0]]
-                move_str += str(old_position[1]+1)
-
-        new_piece = self.pieces[new_position[0]][new_position[1]]
-        if(new_piece.piece_type!=PieceType.EMPTY or en_passant):
-            if (old_piece.piece_type == PieceType.PAWN):
-                move_str += letters[old_position[0]]
-            move_str+="x"
-        letters = "abcdefgh"
-        move_str+=(letters[new_position[0]])
-
-        move_str+=(str(new_position[1]+1))
-        if(promote_choice != PieceType.EMPTY):
-            if(promote_choice ==PieceType.QUEEN):
-                move_str += "=Q"
-            if(promote_choice ==PieceType.ROOK):
-                move_str += "=R"
-            if(promote_choice ==PieceType.BISHOP):
-                move_str += "=B"
-            if(promote_choice ==PieceType.KNIGHT):
-                move_str += "=N"
-
-        return move_str
-    '''
     def toggle_color(self):
         if(self.color_to_move==Color.WHITE):
             self.color_to_move = Color.BLACK
         elif(self.color_to_move==Color.BLACK):
             self.color_to_move = Color.WHITE
 
+def simple_to_normal(simple_board):
+    pieces = [[Piece(Color.NONE,PieceType.EMPTY)]*8 for i in range(8)]
+    colors = [[Color.NONE]*8 for i in range(8)]
+    simple_pieces = simple_board.pieces
+    white_positions = []
+    black_positions = []
+    for i in range(0,8):
+        for j in range(0,8):
+            if (simple_pieces[i][j] % 2 == 1 and simple_pieces[i][j] > 0):
+                colors[i][j] = Color.WHITE
+            if(simple_pieces[i][j]%2 == 0 and simple_pieces[i][j]>0):
+                colors[i][j] = Color.BLACK
+    for i in range(0, 8):
+        for j in range(0, 8):
+            enum_value = (simple_pieces[i][j] + simple_pieces[i][j]%2)//2
+            if(colors[i][j]==Color.WHITE):
+                pieces[i][j] = Piece(colors[i][j],PieceType(enum_value))
+            if (colors[i][j] == Color.BLACK):
+                pieces[i][j] = Piece(colors[i][j],PieceType(enum_value))
+    color_to_move = Color.BLACK
+    if(simple_board.white_to_move):
+        color_to_move = Color.WHITE
+    color_at_bottom = Color.WHITE
+    castling_rights = ""
+    if(simple_board.castling_rights[0]):
+        castling_rights+="K"
+    if(simple_board.castling_rights[1]):
+        castling_rights+="Q"
+    if(simple_board.castling_rights[2]):
+        castling_rights+="k"
+    if(simple_board.castling_rights[3]):
+        castling_rights+="q"
+    else:
+        castling_rights = "-"
+    en_passant = list(simple_board.en_passant)
+    halfmoves = simple_board.halfmoves
+    fullmoves = simple_board.fullmoves
+    output = Board(pieces,color_at_bottom,color_to_move,castling_rights,en_passant,halfmoves,fullmoves)
+
+    return output
 
 def initialise_pieces(): #initialise the starting position of a chessboard. Return the corresponding piece array
     pieces = [[Piece(Color.NONE, PieceType.EMPTY)] * 8 for i in range(8)]

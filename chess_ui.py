@@ -9,6 +9,7 @@ from pygame_widgets.textbox import TextBox
 from pygame_widgets.slider import Slider
 from pygame_widgets.toggle import Toggle
 import board_elements
+import simple_board
 from board_elements import Board,Color,Piece,PieceType
 import computer_engine
 import move_generator
@@ -262,8 +263,12 @@ fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
 #fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
 fen_str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
 board = board_elements.import_fen(fen_str)
+simple_pieces = simple_board.initialise_pieces()
+
+board = board_elements.simple_to_normal(s_board)
+print(board.white_piece_positions)
 allowed_moves = move_generator.generate_legal_moves(board)
-board = board_elements.Board(pieces)
+#board = board_elements.Board(pieces)
 game_fens = [board_elements.generate_fen(board)] # save all fen strings for the board so it can be replayed
 fen_to_display = 0 # the current fen being displayed
 game_move_strs = []
