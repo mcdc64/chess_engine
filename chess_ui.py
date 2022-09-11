@@ -10,7 +10,7 @@ from pygame_widgets.slider import Slider
 from pygame_widgets.toggle import Toggle
 import board_elements
 import simple_board
-from board_elements import Board,Color,Piece,PieceType
+from board_elements import Board,Color,Piece,PieceType,Move
 import computer_engine
 import move_generator
 
@@ -29,7 +29,7 @@ def coords_to_pygame(coords,height): #switches from space coords (positive y is 
 
 def draw_board(board, x1,y1, board_length, screen, screen_height,selected_piece,moving_squares,moving_piece,move_progress):
     if(selected_piece!=[-1,-1] and draw_move_choices):
-        move_choices = [[move[0],move[1]] for move in move_generator.one_legal_moves(board,selected_piece[0],selected_piece[1])]
+        move_choices = [[move.old_position,move.new_position] for move in move_generator.one_legal_moves(board,selected_piece[0],selected_piece[1])]
     else:
         move_choices = []
     squares_to_highlight = [choice[1] for choice in move_choices] # all possible squares the selected piece can move to
@@ -258,15 +258,18 @@ promote_piece = board_elements.PieceType.EMPTY
 promote_position = [-1,-1]
 
 pieces = board_elements.initialise_pieces()
-#fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 8"
-fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
-#fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
-fen_str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
-board = board_elements.import_fen(fen_str)
-simple_pieces = simple_board.initialise_pieces()
+fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 1"
 
-board = board_elements.simple_to_normal(s_board)
-print(board.white_piece_positions)
+#fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
+#fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
+#fen_str = "8/8/8/8/8/k7/5K1r/8 w - - 0 8"
+fen_str = "k1K5/8/8/8/8/8/8/2R1R4 w - - 0 1" #testing move str ambiguities
+fen_str = "K7/3P4/8/8/8/8/8/k w - c6 1 8" # fen to test promotion
+
+board = board_elements.import_fen(fen_str)
+
+
+
 allowed_moves = move_generator.generate_legal_moves(board)
 #board = board_elements.Board(pieces)
 game_fens = [board_elements.generate_fen(board)] # save all fen strings for the board so it can be replayed
@@ -375,7 +378,7 @@ while running:
         moving_piece = copy.deepcopy(board.pieces[origin_square[0]][origin_square[1]])
         moving_color = moving_piece.color
 
-        pawn_moves = [[move[0],move[1]] for move in move_generator.one_legal_moves(board,origin_square[0],origin_square[1])]
+        pawn_moves = [[move.old_position,move.new_position] for move in move_generator.one_legal_moves(board,origin_square[0],origin_square[1])]
         # if the move requires a promotion, open the promotion menu
         if (target_square[1] == 7 and moving_piece.piece_type == board_elements.PieceType.PAWN and moving_color == board_elements.Color.WHITE and not promoting_menu_open):
             if(promote_piece == PieceType.EMPTY and [origin_square,target_square] in pawn_moves):
@@ -399,10 +402,11 @@ while running:
         #generate allowed moves and check whether or not the given move is allowed
         allowed_moves = move_generator.generate_legal_moves(board)
 
-        if(([origin_square,target_square,promote_piece] in allowed_moves) and not promoting_menu_open):
+        player_move = Move(origin_square, target_square, promote_piece)
+        if((player_move in allowed_moves) and not promoting_menu_open):
 
-            game_move_strs.append(move_generator.move_string(board,origin_square, target_square, promote_choice=promote_piece))
-            board.move(origin_square,target_square,promote_piece) # add checks that the move is legal later (if we ever get there)
+            game_move_strs.append(move_generator.move_string(board,player_move))
+            board.make_move(player_move)
 
             game_fens.append(board_elements.generate_fen((board)))
             print("Castling rights: "+str(board.castling_rights))
@@ -426,7 +430,7 @@ while running:
             target_square= [-1,-1]
             first_square = [-1,-1]
             second_square = [-1,-1]
-        elif(([origin_square,target_square,promote_piece]not in allowed_moves) and not(promoting_menu_open or promote_piece!=PieceType.EMPTY)):
+        elif((Move(origin_square,target_square,promote_piece)not in allowed_moves) and not(promoting_menu_open or promote_piece!=PieceType.EMPTY)):
             origin_square = [-1, -1]
             target_square = [-1, -1]
             first_square = [-1,-1]
@@ -443,8 +447,8 @@ while running:
         last_board = copy.deepcopy(board)
         if(comp_moving_piece.color == board.color_to_move):
             game_move_strs.append(move_generator.move_string(board,engine_first, engine_second,promote_choice=engine_promote))
-
-            board.move(engine_first, engine_second,engine_promote)
+            engine_move = Move(engine_first,engine_second,engine_promote)
+            board.make_move(engine_move)
             game_fens.append(board_elements.generate_fen((board)))
             fen_to_display += 1
             if(translate_pieces):
