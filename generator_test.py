@@ -1,5 +1,6 @@
 import board_elements
 from board_elements import Board,Color,Piece,PieceType,Move,import_fen,generate_fen
+from evaluation import evaluate
 import simple_board
 import move_generator
 
@@ -31,9 +32,9 @@ board.make_move(Move([1,7],[2,5]))
 board.make_move(Move([5,0],[1,4]))
 board.make_move(Move([3,6],[3,5]))
 board.make_move(Move([1,4],[2,5])) #Ruy Lopez, followed by Old Steinitz defense and capture of knight on c6
-board.make_move(Move([1,6],[2,5]))
-print(generate_fen(board))
 
+print(generate_fen(board))
+print("Evaluation: "+str(evaluate(board)))
 
 
 startTime = time.time()
