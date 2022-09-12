@@ -470,7 +470,7 @@ def get_attacked_squares(board,attacking_color): # get a bit board showing squar
     attacked_squares = []
     bit_board = np.full((8,8),False)
     attacking_pieces = board.white_piece_positions
-    if(attacking_color == Color.WHITE):
+    if(attacking_color == Color.BLACK):
         attacking_pieces = board.black_piece_positions
     switched = False
     if(board.color_to_move != attacking_color):
