@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="k">
+    <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/board_elements.py" beforeDir="false" afterPath="$PROJECT_DIR$/board_elements.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chess_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/chess_ui.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/move_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/move_generator.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -149,7 +148,14 @@
       <option name="project" value="LOCAL" />
       <updated>1662558343733</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Fixed a bug where castling rights were not restored by unmaking moves">
+      <created>1674075588602</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1674075588602</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -173,7 +179,8 @@
     <MESSAGE value="Made pieces move to their squares instead of &quot;teleporting&quot;" />
     <MESSAGE value="Added generation of pseudo-legal moves, and a promotion system" />
     <MESSAGE value="Changed move generator to include a field for promotion piece" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changed move generator to include a field for promotion piece" />
+    <MESSAGE value="Fixed a bug where castling rights were not restored by unmaking moves" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed a bug where castling rights were not restored by unmaking moves" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -311,7 +311,6 @@ def generate_legal_moves(board):
     pseudo_moves = generate_pseudo_moves(board)
     allowed_moves = []
     for move in pseudo_moves:
-
         board.make_move(move)
 
         board.toggle_color()
