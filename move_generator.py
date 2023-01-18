@@ -313,11 +313,13 @@ def generate_legal_moves(board):
     for move in pseudo_moves:
 
         board.make_move(move)
+
         board.toggle_color()
         if (not in_check(board)):
             allowed_moves.append(move)
         board.toggle_color()
         board.unmake_move(move)
+
     return allowed_moves
 
 def in_check(board): # returns True if the color to move is currently in check, False otherwise

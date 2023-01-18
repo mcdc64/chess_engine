@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d954b30f-f02f-4c78-9c75-14e088c9a6ff" name="Default Changelist" comment="k">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/board_elements.py" beforeDir="false" afterPath="$PROJECT_DIR$/board_elements.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/chess_ui.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/move_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/move_generator.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -24,7 +27,7 @@
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/chess_ui.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -38,7 +41,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.moves_test">
+  <component name="RunManager" selected="Python.chess">
     <configuration name="chess" type="PythonConfigurationType" factoryName="Python">
       <module name="chess_engine" />
       <option name="INTERPRETER_OPTIONS" value="" />

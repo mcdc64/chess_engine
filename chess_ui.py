@@ -258,20 +258,22 @@ promote_piece = board_elements.PieceType.EMPTY
 promote_position = [-1,-1]
 
 pieces = board_elements.initialise_pieces()
-fen_str = "rnbk2nr/ppp2Bpp/8/2b8/4N8/5Q8/PPPP1PPP/R1B1K2R b KQkq - 0 1"
+fen_str = "rnbkqbnr/pppppppp/8/8/8/8/PPPPPPPP/RBNKQBNR w KQkq - 0 1"
+
 
 #fen_str = "8/1K6/8/2Q5/8/3k4/2p5/8 w - - 0 8"
 #fen_str = "8/2p5/8/KP5r/8/8/8/7k b - - 0 8"
 #fen_str = "8/8/8/8/8/k7/5K1r/8 w - - 0 8"
-fen_str = "k1K5/8/8/8/8/8/8/2R1R4 w - - 0 1" #testing move str ambiguities
-fen_str = "K7/3P4/8/8/8/8/8/k w - c6 1 8" # fen to test promotion
+#fen_str = "k1K5/8/8/8/8/8/8/2R1R4 w - - 0 1" #testing move str ambiguities
+#fen_str = "K7/3P4/8/8/8/8/8/k w - c6 1 8" # fen to test promotion
 
 board = board_elements.import_fen(fen_str)
 
 
 
-allowed_moves = move_generator.generate_legal_moves(board)
-#board = board_elements.Board(pieces)
+#allowed_moves = move_generator.generate_legal_moves(board)
+board = board_elements.Board(pieces)
+
 game_fens = [board_elements.generate_fen(board)] # save all fen strings for the board so it can be replayed
 fen_to_display = 0 # the current fen being displayed
 game_move_strs = []

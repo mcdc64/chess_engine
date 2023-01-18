@@ -45,6 +45,7 @@ class Move():
         if(promote_piece != PieceType.EMPTY):
             self.is_promotion = True
         self.is_castle = False
+        self.removed_castling_rights = ""
         self.is_en_passant = False
         self.prev_en_passant = [-1,-1] #en passant state of the board BEFORE the move is executed
     def print_stats(self):
@@ -102,6 +103,7 @@ class Board():
                 self.color_to_move = Color.WHITE
             elif(moving_piece.color==Color.WHITE):
                 self.color_to_move = Color.BLACK
+            move.removed_castling_rights = self.check_castling_rights()
             return True
 
         #update board elements based on move characteristics
@@ -160,7 +162,7 @@ class Board():
             self.color_to_move = Color.WHITE
         elif(moving_piece.color == Color.WHITE):
             self.color_to_move = Color.BLACK
-        self.check_castling_rights()
+        move.removed_castling_rights = self.check_castling_rights()
 
     def unmake_move(self,move): #undoes a move that was just done to the board
         # messes up the halfmove counter but we don't care for the purposes of move generation...
@@ -201,6 +203,13 @@ class Board():
                     self.pieces[new_position[0]][new_position[1] + 1] = Piece(pawn_color, PieceType.PAWN)
                     self.white_piece_positions.append([new_position[0], new_position[1]+1])
             self.en_passant = move.prev_en_passant
+
+
+            if move.removed_castling_rights != "":
+                if "K" in move.removed_castling_rights: self.castling_rights[0] = True
+                if "Q" in move.removed_castling_rights: self.castling_rights[1] = True
+                if "k" in move.removed_castling_rights: self.castling_rights[2] = True
+                if "q" in move.removed_castling_rights: self.castling_rights[3] = True
 
         else:
             if(new_position == [6,0]):
@@ -258,22 +267,35 @@ class Board():
     def check_castling_rights(self):
         # check if the white king has moved from its starting spot
         if ((self.pieces[4][0].piece_type != PieceType.KING) or (self.pieces[4][0].color != Color.WHITE)):
-            self.castling_rights[0] = False
-            self.castling_rights[1] = False
+            if(self.castling_rights[0] or self.castling_rights[1]):
+                self.castling_rights[0] = False
+                self.castling_rights[1] = False
+                return "KQ"
+
         # Repeat for the two white rooks, and their black counterparts
         if (self.pieces[7][0].piece_type != PieceType.ROOK or (self.pieces[7][0].color != Color.WHITE)):
-            self.castling_rights[0] = False
+            if(self.castling_rights[1]):
+                self.castling_rights[0] = False
+                return "Q"
         if (self.pieces[0][0].piece_type != PieceType.ROOK or (self.pieces[0][0].color != Color.WHITE)):
-            self.castling_rights[1] = False
+            if(self.castling_rights[0]):
+                self.castling_rights[0] = False
+                return "K"
         # Black king and rooks
         if ((self.pieces[4][7].piece_type != PieceType.KING) or (self.pieces[4][7].color != Color.BLACK)):
-            self.castling_rights[2] = False
-            self.castling_rights[3] = False
-
+            if (self.castling_rights[2] or self.castling_rights[3]):
+                self.castling_rights[2] = False
+                self.castling_rights[3] = False
+                return "kq"
         if (self.pieces[7][7].piece_type != PieceType.ROOK or (self.pieces[7][7].color != Color.BLACK)):
-            self.castling_rights[2] = False
+            if (self.castling_rights[2]):
+                self.castling_rights[2] = False
+                return "k"
         if (self.pieces[0][7].piece_type != PieceType.ROOK or (self.pieces[0][7].color != Color.BLACK)):
-            self.castling_rights[3] = False
+            if (self.castling_rights[3]):
+                self.castling_rights[3] = False
+                return "q"
+        return ""
 
     def move_castle(self,old_position,new_position):
         # Handles castling possibilities when the "move" method is called.
@@ -327,7 +349,7 @@ class Board():
             self.black_piece_positions.append([2,7])
             self.black_piece_positions.append([3,7])
             output = True
-
+        '''
         # check if the white king has moved from its starting spot
         if ((self.pieces[4][0].piece_type != PieceType.KING) or (self.pieces[4][0].color != Color.WHITE)):
             self.castling_rights[0] = False
@@ -346,6 +368,7 @@ class Board():
             self.castling_rights[2] = False
         if (self.pieces[0][7].piece_type != PieceType.ROOK or (self.pieces[0][7].color != Color.BLACK)):
             self.castling_rights[3] = False
+        '''
         return output
 
     def toggle_color(self):
@@ -450,6 +473,7 @@ def import_fen(fen_str): #standardised representation of a chess board using a s
     if(fen_parts[1]=="w"):
         color_to_move = Color.WHITE
     castling_rights_str = fen_parts[2]
+    print(castling_rights_str)
     en_passant_str = fen_parts[3]
     alpha_string = "abcdefgh"
     if(en_passant_str == "-"):
